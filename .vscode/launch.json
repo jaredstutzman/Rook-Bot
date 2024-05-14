@@ -1,0 +1,19 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lua-local",
+            "request": "launch",
+            "name": "Debug Corona",
+            "program": {
+                "command": "/Applications/Corona/Corona Simulator.app/Contents/MacOS/Corona Simulator"
+            },
+            "args": [
+                "-no-console YES -debug 1 -project ${workspaceFolder}/main.lua"
+            ]
+        }
+    ]
+}
