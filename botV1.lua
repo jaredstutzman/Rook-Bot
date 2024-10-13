@@ -17,6 +17,11 @@ rtn.new = function(ID, team)
     obj.myHandX = ((obj.ID - 1) % 2 + 1) * 300 - 450 + display.contentCenterX
     obj.myHandX = display.contentCenterX + 150 - (math.abs(2.5 - obj.ID) - 0.5) * 300
     obj.myHandY = math.ceil(obj.ID / 2) * 200 - 300 + display.contentCenterY + 20
+    obj.reset = function()
+        obj.didPass = false
+        obj.handIsSorted = false
+        obj.tookNest = false
+    end
     obj.sortHand = function(trump)
         local redCards = {}
         local blackCards = {}
@@ -624,6 +629,7 @@ rtn.new = function(ID, team)
         -- play the color thats led
         -- if you are not the lead
         if _G.game.rounds and _G.game.rounds[_G.game.thisRound].turns and #_G.game.rounds[_G.game.thisRound].turns > 0 then
+            print(_G.game.thisRound)
             local cardLed = _G.game.rounds[_G.game.thisRound].turns[1].card
             local color = string.sub(cardLed, 1, 1)
             if cardLed == "bird" then

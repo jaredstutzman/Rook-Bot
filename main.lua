@@ -136,14 +136,10 @@ end
 -- shuffle cards
 local shuffleCards = function()
     local shuffledCards = {}
-    local unshuffledCards = {}
-    for i = 1, 33 do
-        unshuffledCards[i] = i
-    end
-    for i = 1, 33 do
-        local index = math.random(1, #unshuffledCards)
-        shuffledCards[#shuffledCards + 1] = deck[unshuffledCards[index]]
-        table.remove(unshuffledCards, index)
+    for i = 1, #deck do
+        local index = math.random(1, #deck)
+        shuffledCards[i] = deck[index]
+        table.remove(deck, index)
     end
     deck = shuffledCards
 end
@@ -247,6 +243,7 @@ local step = function()
         shuffleCards()
         dealCards()
         for i = 1, 4 do
+            players[i].reset()
             players[i].sortHand()
             players[i].showHand()
         end
@@ -353,6 +350,7 @@ local step = function()
             isLaying = false
         end
     elseif not gameIsWon then
+        -- get ready for the next round
         local team = players[playerWithNest].team
         local otherTeam = team - (team * 2 - 3)
         local points = countPoints(team, _G.game.thisRound)
@@ -366,14 +364,16 @@ local step = function()
         print("the player with the nest bid " .. tostring(wentUp))
         print("his bid was " .. _G.game.bids.lastBid)
         print("and he got " .. points)
-        print("now the scors are:\nteam 1 | team 2\n  " .. teams[1].points .. " | " .. teams[2].points)
+        print("now the scors are:\nteam 1: " .. teams[1].points .. "\nteam 2 " .. teams[2].points)
         setup = true
+        -- check if a team won
         if teams[otherTeam].points > 1000 and teams[otherTeam].points > teams[team].points then
             setup = false
             gameIsWon = true
             print("team " .. otherTeam .. " won")
             print("with " .. teams[otherTeam].points .. " points")
         end
+        -- check if a team won
         if teams[team].points > 1000 and teams[team].points > teams[otherTeam].points then
             setup = false
             gameIsWon = true
@@ -421,3 +421,5 @@ local number4 = 0
 --         print("    " .. sortedCards[c][n])
 --     end
 -- end
+
+-- TODO: the second round of biding never ends?!
