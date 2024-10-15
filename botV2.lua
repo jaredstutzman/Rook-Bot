@@ -72,12 +72,14 @@ rtn.new = function(ID, team)
         addPrefix(greenCards, "g")
         local sortedCards = {redCards, blackCards, yellowCards, greenCards}
         table.sort(sortedCards, function(a, b)
+            -- trump goes first
             if (trump and #a > 0 and string.sub(a[1], 1, 1) == string.sub(trump, 1, 1)) then
                 return false
             end
             if (trump and #b > 0 and string.sub(b[1], 1, 1) == string.sub(trump, 1, 1)) then
                 return true
             end
+            -- there is no trump so sort by size
             return #a < #b
         end)
         if hasBird then
@@ -112,6 +114,7 @@ rtn.new = function(ID, team)
         obj.myHand.y = obj.myHandY
     end
     obj.bid = function(bids, highestBid, passedPlayers)
+        obj.didPass = false
         local largestSafeBid = minBid
         local idealBid = largestSafeBid
         local cardPower = 0
@@ -170,11 +173,11 @@ rtn.new = function(ID, team)
                 redPoints = redPoints + tonumber(string.sub(redCount[c], 2))
             end
         end
-        for c = 1, #redCount do
-            if highCardPoints[string.sub(redCount[c], 2)] then
-                blackPoints = blackPoints + highCardPoints[string.sub(redCount[c], 2)]
+        for c = 1, #blackCount do
+            if highCardPoints[string.sub(blackCount[c], 2)] then
+                blackPoints = blackPoints + highCardPoints[string.sub(blackCount[c], 2)]
             else
-                blackPoints = blackPoints + tonumber(string.sub(redCount[c], 2))
+                blackPoints = blackPoints + tonumber(string.sub(blackCount[c], 2))
             end
         end
         for c = 1, #yellowCount do
@@ -253,6 +256,9 @@ rtn.new = function(ID, team)
                     idealBid = "pass"
                 end
             end
+        end
+        if idealBid == "pass" then
+            obj.didPass = true
         end
         return idealBid
     end
@@ -372,6 +378,7 @@ rtn.new = function(ID, team)
         -- don't put the highest cards back
         -- try to eliminate entire colors
         -- if you keep one card of a color don't keep points
+        local newNest = {}
         local posibleEliminies = {}
         local keepingColors = {}
         keepingColors[1] = trump
@@ -379,17 +386,26 @@ rtn.new = function(ID, team)
             -- not trump
             if string.sub(obj.cards[c], 1, 1) ~= string.sub(trump, 1, 1) and obj.cards[c] ~= "bird" then
                 posibleEliminies[#posibleEliminies + 1] = c
-            elseif #posibleEliminies < 5 then
-                -- unless still need to eliminate cards
-                -- not the highest
-                posibleEliminies[#posibleEliminies + 1] = c
             end
         end
-        if #posibleEliminies == 5 then
+        if #posibleEliminies < 5 then
             for c = #posibleEliminies, 1, -1 do
+                newNest[#newNest + 1] = obj.cards[posibleEliminies[c]]
                 table.remove(obj.cards, posibleEliminies[c])
             end
-            return
+            for c = 1, 5 - #posibleEliminies do
+                newNest[#newNest + 1] = obj.cards[c]
+                table.remove(obj.cards, c)
+            end
+            return newNest
+        end
+        -- if 5 cards are eliminated then we're done
+        if #posibleEliminies == 5 then
+            for c = #posibleEliminies, 1, -1 do
+                newNest[#newNest + 1] = obj.cards[posibleEliminies[c]]
+                table.remove(obj.cards, posibleEliminies[c])
+            end
+            return newNest
         end
         local highCards = {}
         highCards.r = {}
@@ -426,10 +442,11 @@ rtn.new = function(ID, team)
         if sorted then
             for c = #posibleEliminies, 1, -1 do
                 if posibleEliminies[c] ~= false then
-                    table.remove(obj.cards, c)
+                    newNest[#newNest + 1] = obj.cards[posibleEliminies[c]]
+                    table.remove(obj.cards, posibleEliminies[c])
                 end
             end
-            return
+            return newNest
         end
         for c = #posibleEliminies, 1, -1 do
             if posibleEliminies[c] == false then
@@ -552,43 +569,16 @@ rtn.new = function(ID, team)
                 end
             end
         end
-        -- remove high priority cards
-        -- local numberOfKeepers = #obj.cards
-        -- local removeThese = {}
-        -- for c = #posibleEliminies, 1, -1 do
-        --     if posibleEliminies[c].priority == 1 then
-        --         removeThese[#removeThese + 1] = posibleEliminies[c].ID
-        --         table.remove(posibleEliminies, c)
-        --         numberOfKeepers = numberOfKeepers - 1
-        --         if numberOfKeepers == 7 then
-        --             break
-        --         end
-        --     end
-        -- end
-        -- table.sort(removeThese)
-        -- for c = #removeThese, 1, -1 do
-        --     obj.cards[c] = false
-        --     table.remove(removeThese, c)
-        -- end
-        -- if #posibleEliminies == 5 then
-        --     for c = #posibleEliminies, 1, -1 do
-        --         table.remove(obj.cards, posibleEliminies[c].ID)
-        --     end
-        --     return
-        -- end
         -- simply finish for now 
         local priorities = posibleEliminies
         table.sort(priorities, function(a, b)
             return a.priority < b.priority
         end)
-        -- for c = 1, #priorities do
-        --     print(priorities[c].priority, obj.cards[priorities[c].ID])
-        -- end
         local numberOfCards = #obj.cards
         for c = 1, 5, 1 do
+            newNest[#newNest + 1] = obj.cards[priorities[c].ID]
             obj.cards[priorities[c].ID] = false
             numberOfCards = numberOfCards - 1
-            -- table.remove(priorities, c)
             if numberOfCards == 7 then
                 break
             end
@@ -598,6 +588,7 @@ rtn.new = function(ID, team)
                 table.remove(obj.cards, c)
             end
         end
+        return newNest
     end
     obj.takeNest = function(nest)
         obj.cards = table.copy(nest, obj.cards)
@@ -607,16 +598,16 @@ rtn.new = function(ID, team)
         obj.showHand()
         local trump = obj.chooseTrump()
         _G.game.trump = trump
-        print("trump is " .. trump)
         obj.sortHand(trump)
         obj.showHand()
-        obj.sortOutNest(trump)
+        local nestReject = obj.sortOutNest(trump)
         if obj.myHand then
             display.remove(obj.myHand)
         end
         obj.myHand = _G.showHand(obj.ID)
         obj.myHand.x = obj.myHandX
         obj.myHand.y = obj.myHandY
+        return nestReject
     end
     obj.layCard = function()
         local cardID = 1
@@ -650,6 +641,10 @@ rtn.new = function(ID, team)
         end
         -- lay card
         local card = obj.cards[cardID]
+        print(card)
+        if card == nil then
+            local test
+        end
         local cardObj = obj.myHand.cards[cardID]
         transition.to(cardObj, {
             x = display.contentCenterX - obj.myHand.x,
@@ -659,7 +654,6 @@ rtn.new = function(ID, team)
                 display.remove(cardObj)
             end
         })
-        print(obj.ID, card)
         table.remove(obj.cards, cardID)
         table.remove(obj.myHand.cards, cardID)
         return card
