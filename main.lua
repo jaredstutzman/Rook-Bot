@@ -31,7 +31,6 @@ _G.game.thisRound = 0
 -- _G.game.trump
 -- _G.game.rounds
 -- create deck
--- red cards
 local colors = {"r", "b", "y", "g"}
 for c = 1, #colors do
     deck[#deck + 1] = colors[c] .. "5"
@@ -161,6 +160,7 @@ local whoWinsTheDraw = function(round)
     local winingPlayer = round.turns[1].player
     local bestValue = string.sub(round.turns[1].card, 2)
     local leadColor = string.sub(bestCard, 1, 1)
+    -- change bestValue to a number
     if bestCard == "bird" then
         leadColor = string.sub(_G.game.trump, 1, 1)
         bestValue = 10.5
@@ -170,6 +170,7 @@ local whoWinsTheDraw = function(round)
     local trumptIn = false
     for i = 2, #round.turns do
         local cardValue = string.sub(round.turns[i].card, 2)
+        -- change bestValue to a number
         if round.turns[i].card == "bird" then
             cardValue = 10.5
         else
@@ -188,8 +189,9 @@ local whoWinsTheDraw = function(round)
             end
         end
         -- trumpt in
+        -- trump is not lead
         if leadColor ~= string.sub(_G.game.trump, 1, 1) then
-            -- the bird is always trum
+            -- this is trump
             if string.sub(round.turns[i].card, 1, 1) == string.sub(_G.game.trump, 1, 1) or round.turns[i].card == "bird" then
                 if not trumptIn then
                     bestCard = round.turns[i].card
@@ -238,6 +240,7 @@ local numberOfBids = 0
 local step = function()
     local thisPlayer = players[playerTurn]
     if setup then
+        -- compareDeck(deck)
         setup = false
         isBiding = true
         shuffleCards()
@@ -273,7 +276,8 @@ local step = function()
         if numberOfPassed == 3 then
             isBiding = false
             isLaying = true
-            players[playerWithNest].takeNest(nest)
+            -- give the player the nest then put there unwanted cards back
+            nest = players[playerWithNest].takeNest(nest)
             bids.lastBid = highestBid
             passedPlayers = {}
         end
