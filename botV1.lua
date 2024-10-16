@@ -641,7 +641,6 @@ rtn.new = function(ID, team)
         end
         -- lay card
         local card = obj.cards[cardID]
-        print(card)
         if card == nil then
             local test
         end
