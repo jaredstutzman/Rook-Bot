@@ -270,9 +270,6 @@ local step = function()
         numberOfPassed = numberOfPassed + (passedPlayers[2] or 0)
         numberOfPassed = numberOfPassed + (passedPlayers[3] or 0)
         numberOfPassed = numberOfPassed + (passedPlayers[4] or 0)
-        if numberOfPassed == 4 then
-            local test
-        end
         if numberOfPassed == 3 then
             isBiding = false
             isLaying = true
@@ -292,7 +289,6 @@ local step = function()
             -- at the end of the round the player that won will start the next round
             if round and round.wonBy then
                 playerTurn = round.wonBy
-                print("won by player" .. playerTurn)
             end
             _G.game.rounds[#_G.game.rounds + 1] = {}
             round = _G.game.rounds[#_G.game.rounds]
@@ -371,59 +367,31 @@ local step = function()
         print("now the scors are:\nteam 1: " .. teams[1].points .. "\nteam 2 " .. teams[2].points)
         setup = true
         -- check if a team won
-        if teams[otherTeam].points > 1000 and teams[otherTeam].points > teams[team].points then
+        if teams[otherTeam].points > 100000 and teams[otherTeam].points > teams[team].points then
             setup = false
             gameIsWon = true
             print("team " .. otherTeam .. " won")
             print("with " .. teams[otherTeam].points .. " points")
+            print('vs team ' .. team)
+            print("with " .. teams[team].points .. " points")
         end
         -- check if a team won
-        if teams[team].points > 1000 and teams[team].points > teams[otherTeam].points then
+        if teams[team].points > 100000 and teams[team].points > teams[otherTeam].points then
             setup = false
             gameIsWon = true
             print("team " .. team .. " won")
             print("with " .. teams[team].points .. " points")
+            print('vs team ' .. otherTeam)
+            print("with " .. teams[otherTeam].points .. " points")
         end
     end
     playerTurn = playerTurn % 4 + 1
 end
+
 timer.performWithDelay(1, step, -1)
--- local animateGame = function()
---     for i = 1,#_G.game.rounds do
---         for I = 1,#_G.game.rounds[i].turns do
---             local card = _G.game.rounds[i].turns[I].card
---             local cardID = 1
---             local playerID = _G.game.rounds[i].turns[I].player
---             for c = 1, #players[playerID].cards do
---                 if players[playerID].cards[c] == card then
---                     cardID = c
---                 end
---             end
---         end
---     end
--- end
--- animateGame()
--- local testHand =
---     _G.showHand(4, table.copy(players[1].cards, players[2].cards, players[3].cards, players[4].cards, nest))
--- for i = 1, #bids do
---     print(bids[i].player, bids[i].bid)
--- end
--- print("player with nest: " .. playerWithNest)
-
-_G.number1 = 0
-local number2 = 0
-local number3 = 0
-local number4 = 0
-
--- local sortedCards = {{"1", "2", "3", "4"}, {"1", "2", "3"}, {"1", "2"}, {"1", "2", "3", "4", "5"}}
--- table.sort(sortedCards, function(a, b)
---     return #a > #b
--- end)
--- for c = 1, #sortedCards do
---     print(c)
---     for n = 1, #sortedCards[c] do
---         print("    " .. sortedCards[c][n])
---     end
+-- for i = 1, 50000 do
+--     step()
 -- end
 
--- TODO: the second round of biding never ends?!
+-- TODO: add a manual control for speed, pause, etc.
+-- TODO: add a control to turn off visuals
