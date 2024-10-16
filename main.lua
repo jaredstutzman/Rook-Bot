@@ -8,7 +8,15 @@ if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
     package.loaded["lldebugger"] = assert(loadfile(os.getenv("LOCAL_LUA_DEBUGGER_FILEPATH")))()
     require("lldebugger").start()
 end
-local botV1 = require("botV1")
+-- debug.setmetatable(true, {
+--     __len = function(value)
+--         return value and 1 or 0
+--     end
+-- })
+
+-- print(#true)
+-- print(#false)
+local botV1 = require("botV3")
 local botV2 = require("botV2")
 local backGroup = display.newGroup()
 local setup = true
@@ -70,6 +78,36 @@ _G.doesHaveThisColor = function(team, color)
                     return true
                 end
             end
+        end
+    end
+    return false
+end
+-- check if card matches the color
+_G.cardMatches = function(card, color)
+    local cardAbrev = string.sub(card, 1, 1)
+    local colorAbrev = string.sub(color, 1, 1)
+    -- is color trump ?
+    if string.lower(colorAbrev) == "t" then
+        if _G.game.trump == nil then
+            return false
+        end
+        colorAbrev = string.sub(_G.game.trump, 1, 1)
+    elseif color == "bird" then
+        return card == "bird"
+    end
+    -- the bird only matches trump
+    if card == "bird" then
+        if _G.game.trump then
+            if colorAbrev == string.sub(_G.game.trump, 1, 1) then
+                return true
+            end
+        else
+            return false
+        end
+    else
+        -- any normal card has to match the color
+        if cardAbrev == colorAbrev then
+            return true
         end
     end
     return false
@@ -270,7 +308,7 @@ local numberOfBids = 0
 local step = function()
     local thisPlayer = players[playerTurn]
     if setup then
-        -- compareDeck(deck)
+        -- TODO: trump = nil
         setup = false
         isBiding = true
         highestBid = 0
@@ -401,7 +439,7 @@ local step = function()
         end
         setup = true
         -- check if a team won
-        if teams[otherTeam].points > 100000 and teams[otherTeam].points > teams[team].points then
+        if teams[otherTeam].points > 10000 and teams[otherTeam].points > teams[team].points then
             setup = false
             gameIsWon = true
             print("team " .. otherTeam .. " won")
@@ -410,7 +448,7 @@ local step = function()
             print("with " .. teams[team].points .. " points")
         end
         -- check if a team won
-        if teams[team].points > 100000 and teams[team].points > teams[otherTeam].points then
+        if teams[team].points > 10000 and teams[team].points > teams[otherTeam].points then
             setup = false
             gameIsWon = true
             print("team " .. team .. " won")
@@ -429,3 +467,5 @@ timer.performWithDelay(1, step, -1)
 
 -- TODO: add a manual control for speed, pause, etc.
 -- TODO: add a control to turn off visuals
+
+-- TODO: rewrite and clean up

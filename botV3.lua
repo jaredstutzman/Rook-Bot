@@ -15,27 +15,21 @@ local oppHasTrump = function(obj)
         local trumpCount = 0
         for i = firstRound, _G.game.thisRound do
             for I = 1, #_G.game.rounds[i].turns do
-                if string.sub(_G.game.rounds[i].turns[I].card, 1, 1) == string.sub(_G.game.trump, 1, 1) then
-                    trumpCount = trumpCount + 1
-                elseif _G.game.rounds[i].turns[I].card == "bird" then
+                if _G.cardMatches(_G.game.rounds[i].turns[I].card, "trump") then
                     trumpCount = trumpCount + 1
                 end
             end
         end
         -- count trump in your hand
         for c = 1, #obj.cards do
-            if string.sub(obj.cards[c], 1, 1) == string.sub(_G.game.trump, 1, 1) then
-                trumpCount = trumpCount + 1
-            elseif obj.cards[c] == "bird" then
+            if _G.cardMatches(obj.cards[c], "trump") then
                 trumpCount = trumpCount + 1
             end
         end
         -- count trump in nestReject
         if obj.nestReject then
             for c = 1, #obj.nestReject do
-                if string.sub(obj.nestReject[c], 1, 1) == string.sub(_G.game.trump, 1, 1) then
-                    trumpCount = trumpCount + 1
-                elseif obj.nestReject[c] == "bird" then
+                if _G.cardMatches(obj.nestReject[c], "trump") then
                     trumpCount = trumpCount + 1
                 end
             end
@@ -51,24 +45,18 @@ local oppHasTrump = function(obj)
         for i = firstRound, _G.game.thisRound do
             -- check if this round just started
             if #_G.game.rounds[i].turns > 0 then
-                local trumpWasLed = false
-                if string.sub(_G.game.rounds[i].turns[1].card, 1, 1) == string.sub(_G.game.trump, 1, 1) then
-                    trumpWasLed = true
-                elseif _G.game.rounds[i].turns[1].card == "bird" then
-                    trumpWasLed = true
-                end
-                if trumpWasLed then
+                -- check if the trump was led
+                if _G.cardMatches(_G.game.rounds[i].turns[1].card, "trump") then
                     -- check if the opponents played trump
                     for I = 1, #_G.game.rounds[i].turns do
                         -- this is an oppoennt
                         if not _G.teams[obj.team][_G.game.rounds[i].turns[I].player] then
-                            if _G.game.rounds[i].turns[I].card ~= "bird" then
-                                if string.sub(_G.game.rounds[i].turns[I].card, 1, 1) ~= string.sub(_G.game.trump, 1, 1) then
-                                    if _G.game.rounds[i].turns[I].player < 3 then
-                                        opp1hasTrump = false
-                                    else
-                                        opp2hasTrump = false
-                                    end
+                            -- chack if they ran out of trump
+                            if not _G.cardMatches(_G.game.rounds[i].turns[I].card, "trump") then
+                                if _G.game.rounds[i].turns[I].player < 3 then
+                                    opp1hasTrump = false
+                                else
+                                    opp2hasTrump = false
                                 end
                             end
                         end
@@ -110,22 +98,22 @@ rtn.new = function(ID, team)
         local greenCards = {}
         local hasBird = false
         for c = #obj.cards, 1, -1 do
-            -- the card is red
-            if string.sub(obj.cards[c], 1, 1) == "r" then
-                redCards[#redCards + 1] = tonumber(string.sub(obj.cards[c], 2))
-                -- the card is black
-                -- bird also starts with b
-            elseif string.sub(obj.cards[c], 1, 1) == "b" and string.sub(obj.cards[c], 2, 2) ~= "i" then
-                blackCards[#blackCards + 1] = tonumber(string.sub(obj.cards[c], 2))
-                -- the card is yellow
-            elseif string.sub(obj.cards[c], 1, 1) == "y" then
-                yellowCards[#yellowCards + 1] = tonumber(string.sub(obj.cards[c], 2))
-                -- the card is green
-            elseif string.sub(obj.cards[c], 1, 1) == "g" then
-                greenCards[#greenCards + 1] = tonumber(string.sub(obj.cards[c], 2))
-            elseif obj.cards[c] == "bird" then
+            -- deal with bird first
+            if obj.cards[c] == "bird" then
                 hasBird = true
                 table.remove(obj.cards, c)
+                -- the card is red
+            elseif _G.cardMatches(obj.cards[c], "red") then
+                redCards[#redCards + 1] = tonumber(string.sub(obj.cards[c], 2))
+                -- the card is black
+            elseif _G.cardMatches(obj.cards[c], "black") then
+                blackCards[#blackCards + 1] = tonumber(string.sub(obj.cards[c], 2))
+                -- the card is yellow
+            elseif _G.cardMatches(obj.cards[c], "yellow") then
+                yellowCards[#yellowCards + 1] = tonumber(string.sub(obj.cards[c], 2))
+                -- the card is green
+            elseif _G.cardMatches(obj.cards[c], "green") then
+                greenCards[#greenCards + 1] = tonumber(string.sub(obj.cards[c], 2))
             end
         end
         table.sort(redCards)
@@ -223,16 +211,20 @@ rtn.new = function(ID, team)
         local yellowCount = {}
         local greenCount = {}
         for c = 1, #obj.cards do
-            if string.sub(obj.cards[c], 1, 1) == "r" then
+            -- deal with colors
+            if obj.cards[c] == "bird" then
+                break
+            end
+            if _G.cardMatches(obj.cards[c], "red") then
                 redCount[#redCount + 1] = obj.cards[c]
             end
-            if string.sub(obj.cards[c], 1, 1) == "b" and obj.cards[c] ~= "bird" then
+            if _G.cardMatches(obj.cards[c], "black") then
                 blackCount[#blackCount + 1] = obj.cards[c]
             end
-            if string.sub(obj.cards[c], 1, 1) == "y" then
+            if _G.cardMatches(obj.cards[c], "yellow") then
                 yellowCount[#yellowCount + 1] = obj.cards[c]
             end
-            if string.sub(obj.cards[c], 1, 1) == "g" then
+            if _G.cardMatches(obj.cards[c], "green") then
                 greenCount[#greenCount + 1] = obj.cards[c]
             end
         end
@@ -391,32 +383,32 @@ rtn.new = function(ID, team)
             return isOne, is14
         end
         for c = 1, #obj.cards do
-            if string.sub(obj.cards[c], 1, 1) == "r" then
+            if obj.cards[c] == "bird" then
+                birdPoints = 11
+            elseif _G.cardMatches(obj.cards[c], "red") then
                 redCards[#redCards + 1] = c
                 redCards.height = redCards.height + tonumber(string.sub(obj.cards[c], 2))
                 local hasOne, has14 = isHigh(c, redHighCards)
                 hasRedOne = hasRedOne + hasOne
                 hasRed14 = hasRed14 + has14
-            elseif string.sub(obj.cards[c], 1, 1) == "b" and obj.cards[c] ~= "bird" then
+            elseif _G.cardMatches(obj.cards[c], "black") then
                 blackCards[#blackCards + 1] = c
                 blackCards.height = blackCards.height + tonumber(string.sub(obj.cards[c], 2))
                 local hasOne, has14 = isHigh(c, blackHighCards)
                 hasBlackOne = hasBlackOne + hasOne
                 hasBlack14 = hasBlack14 + has14
-            elseif string.sub(obj.cards[c], 1, 1) == "y" then
+            elseif _G.cardMatches(obj.cards[c], "yellow") then
                 yellowCards[#yellowCards + 1] = c
                 yellowCards.height = yellowCards.height + tonumber(string.sub(obj.cards[c], 2))
                 local hasOne, has14 = isHigh(c, yellowHighCards)
                 hasYellowOne = hasYellowOne + hasOne
                 hasYellow14 = hasYellow14 + has14
-            elseif string.sub(obj.cards[c], 1, 1) == "g" then
+            elseif _G.cardMatches(obj.cards[c], "green") then
                 greenCards[#greenCards + 1] = c
                 greenCards.height = greenCards.height + tonumber(string.sub(obj.cards[c], 2))
                 local hasOne, has14 = isHigh(c, greenHighCards)
                 hasGreenOne = hasGreenOne + hasOne
                 hasGreen14 = hasGreen14 + has14
-            else
-                birdPoints = 11
             end
         end
         local redPoints = (#redCards * 11) + (#redHighCards * 10) + (hasRedOne * 20) + birdPoints
@@ -465,7 +457,7 @@ rtn.new = function(ID, team)
         keepingColors[1] = trump
         for c = 1, #obj.cards do
             -- not trump
-            if string.sub(obj.cards[c], 1, 1) ~= string.sub(trump, 1, 1) and obj.cards[c] ~= "bird" then
+            if not _G.cardMatches(obj.cards[c], trump) then
                 posibleEliminies[#posibleEliminies + 1] = c
             end
         end
@@ -697,22 +689,11 @@ rtn.new = function(ID, team)
         -- unless you are first
         if _G.game.rounds and _G.game.rounds[_G.game.thisRound].turns and #_G.game.rounds[_G.game.thisRound].turns > 0 then
             local cardLed = _G.game.rounds[_G.game.thisRound].turns[1].card
-            local color = string.sub(cardLed, 1, 1)
-            if cardLed == "bird" then
-                color = string.sub(_G.game.trump, 1, 1)
-            end
             for c = 1, #obj.cards do
                 -- it's the same color
-                if string.sub(obj.cards[c], 1, 1) == color then
+                if _G.cardMatches(obj.cards[c], cardLed) then
                     cardID = c
                     break
-                end
-                -- the bird is the same color as trump
-                if color == string.sub(_G.game.trump, 1, 1) then
-                    if obj.cards[c] == "bird" then
-                        cardID = c
-                        break
-                    end
                 end
             end
         else
@@ -722,12 +703,11 @@ rtn.new = function(ID, team)
                 -- stop laying trump if your opponents are out of trump
                 local oppOutOfTrump = oppHasTrump(obj)
                 -- if you have trump
-                if obj.cards[#obj.cards] == "bird" or string.sub(obj.cards[#obj.cards], 1, 1) ==
-                    string.sub(_G.game.trump, 1, 1) then
+                if _G.cardMatches(obj.cards[#obj.cards], "trump") then
                     if oppOutOfTrump then
                         for c = #obj.cards, 1, -1 do
-                            if string.sub(obj.cards[c], 1, 1) ~= string.sub(_G.game.trump, 1, 1) and obj.cards[c] ~=
-                                "bird" then
+                            -- lay the highest non trump
+                            if not _G.cardMatches(obj.cards[c], "trump") then
                                 cardID = c
                                 break
                             end
