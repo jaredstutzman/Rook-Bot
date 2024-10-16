@@ -9,7 +9,7 @@ if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
     require("lldebugger").start()
 end
 local botV1 = require("botV1")
-local botV2 = require("botV1")
+local botV2 = require("botV2")
 local backGroup = display.newGroup()
 local setup = true
 local isBiding = false
@@ -17,6 +17,7 @@ local isLaying = false
 local gameIsWon = false
 local highestBid = 0
 local playerWithNest
+local playerStartBid = math.random(4)
 local cardPile
 local passedPlayers = {}
 local playerTurn = 1
@@ -54,6 +55,25 @@ teams[2] = {
     [4] = players[4],
     points = 0
 }
+_G.teams = teams
+-- check if a team is out of trump
+_G.doesHaveThisColor = function(team, color)
+    local colorFound = false
+    for k, v in ipairs(teams[team]) do
+        for i = 1, #v.cards do
+            if v.cards[i] == "bird" then
+                if color == string.sub(_G.game.trump, 1, 1) then
+                    return true
+                end
+            else
+                if string.sub(v.cards[i], 1, 1) == color then
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
 -- display a card
 _G.showCard = function(color, number)
     local card = display.newGroup()
@@ -212,26 +232,36 @@ end
 local countPoints = function(team, lastRound)
     local round = _G.game.rounds
     local subtotal = 0
+    local cardValue = function(card)
+        if string.sub(card, 2) == "5" then
+            return 5
+        elseif string.sub(card, 2) == "10" or string.sub(card, 2) == "14" then
+            return 10
+        elseif string.sub(card, 2) == "1" then
+            return 15
+        elseif card == "bird" then
+            return 20
+        end
+        return 0
+    end
     -- loop through the last 7 rounds, a full hand
     for i = lastRound - 6, lastRound do
         -- if that round was won by a player on this team
         if teams[team][round[i].wonBy] then
             -- loop through all the cards and count the points
             for I = 1, #round[i].turns do
-                if string.sub(round[i].turns[I].card, 2) == "5" then
-                    subtotal = subtotal + 5
-                elseif string.sub(round[i].turns[I].card, 2) == "10" or string.sub(round[i].turns[I].card, 2) == "14" then
-                    subtotal = subtotal + 10
-                elseif string.sub(round[i].turns[I].card, 2) == "1" then
-                    subtotal = subtotal + 15
-                elseif round[i].turns[I].card == "bird" then
-                    subtotal = subtotal + 20
-                end
+                subtotal = subtotal + cardValue(round[i].turns[I].card)
             end
             -- the last round is worth 20 points
             if i == lastRound then
                 subtotal = subtotal + 20
             end
+        end
+    end
+    -- add the points from the nest if they own the nest
+    if teams[team][playerWithNest] then
+        for i = 1, #nest do
+            subtotal = subtotal + cardValue(nest[i])
         end
     end
     return subtotal
@@ -243,6 +273,7 @@ local step = function()
         -- compareDeck(deck)
         setup = false
         isBiding = true
+        highestBid = 0
         shuffleCards()
         dealCards()
         for i = 1, 4 do
@@ -252,6 +283,11 @@ local step = function()
         end
     elseif isBiding then
         numberOfBids = numberOfBids + 1
+        if highestBid == 0 then
+            playerStartBid = playerStartBid % 4 + 1
+            playerTurn = playerStartBid
+            thisPlayer = players[playerTurn]
+        end
         if thisPlayer.didPass == false then
             local bid = thisPlayer.bid(bids, highestBid, passedPlayers)
             bids[#bids + 1] = {
@@ -287,7 +323,8 @@ local step = function()
             -- the first time the player with the nest leads
             playerTurn = playerWithNest
             -- at the end of the round the player that won will start the next round
-            if round and round.wonBy then
+            -- unless it was the last round of the hand
+            if round and round.wonBy and #_G.game.rounds % 7 ~= 0 then
                 playerTurn = round.wonBy
             end
             _G.game.rounds[#_G.game.rounds + 1] = {}
@@ -343,10 +380,6 @@ local step = function()
         deck[#deck + 1] = cardPlayed
         -- all the cards were layed exept the nest
         if #deck == 28 then
-            for i = 5, 1, -1 do
-                deck[#deck + 1] = nest[i]
-                table.remove(nest, i)
-            end
             isLaying = false
         end
     elseif not gameIsWon then
@@ -361,10 +394,11 @@ local step = function()
             teams[team].points = teams[team].points - _G.game.bids.lastBid
         end
         teams[otherTeam].points = teams[otherTeam].points + 200 - points
-        print("the player with the nest bid " .. tostring(wentUp))
-        print("his bid was " .. _G.game.bids.lastBid)
-        print("and he got " .. points)
-        print("now the scors are:\nteam 1: " .. teams[1].points .. "\nteam 2 " .. teams[2].points)
+        -- put the nest back in the deck
+        for i = 5, 1, -1 do
+            deck[#deck + 1] = nest[i]
+            table.remove(nest, i)
+        end
         setup = true
         -- check if a team won
         if teams[otherTeam].points > 100000 and teams[otherTeam].points > teams[team].points then

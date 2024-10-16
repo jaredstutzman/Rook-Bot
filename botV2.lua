@@ -5,6 +5,85 @@
 -----------------------------------------------------------------------------------------
 -- Your code here
 local minBid = 120
+
+local oppHasTrump = function(obj)
+    -- is there any round data
+    if _G.game.rounds and #_G.game.rounds > 0 then
+        -- loop through all the rounds this hand played
+        -- and count the trump
+        local firstRound = math.floor(_G.game.thisRound / 7) * 7 + 1
+        local trumpCount = 0
+        for i = firstRound, _G.game.thisRound do
+            for I = 1, #_G.game.rounds[i].turns do
+                if string.sub(_G.game.rounds[i].turns[I].card, 1, 1) == string.sub(_G.game.trump, 1, 1) then
+                    trumpCount = trumpCount + 1
+                elseif _G.game.rounds[i].turns[I].card == "bird" then
+                    trumpCount = trumpCount + 1
+                end
+            end
+        end
+        -- count trump in your hand
+        for c = 1, #obj.cards do
+            if string.sub(obj.cards[c], 1, 1) == string.sub(_G.game.trump, 1, 1) then
+                trumpCount = trumpCount + 1
+            elseif obj.cards[c] == "bird" then
+                trumpCount = trumpCount + 1
+            end
+        end
+        -- count trump in nestReject
+        if obj.nestReject then
+            for c = 1, #obj.nestReject do
+                if string.sub(obj.nestReject[c], 1, 1) == string.sub(_G.game.trump, 1, 1) then
+                    trumpCount = trumpCount + 1
+                elseif obj.nestReject[c] == "bird" then
+                    trumpCount = trumpCount + 1
+                end
+            end
+        end
+        -- check if that was all the trump
+        if trumpCount == 9 then
+            return true
+        end
+        -- the opponents did not play trump when it was led
+        -- loop through all the rounds trump was led
+        local opp1hasTrump = true
+        local opp2hasTrump = true
+        for i = firstRound, _G.game.thisRound do
+            -- check if this round just started
+            if #_G.game.rounds[i].turns > 0 then
+                local trumpWasLed = false
+                if string.sub(_G.game.rounds[i].turns[1].card, 1, 1) == string.sub(_G.game.trump, 1, 1) then
+                    trumpWasLed = true
+                elseif _G.game.rounds[i].turns[1].card == "bird" then
+                    trumpWasLed = true
+                end
+                if trumpWasLed then
+                    -- check if the opponents played trump
+                    for I = 1, #_G.game.rounds[i].turns do
+                        -- this is an oppoennt
+                        if not _G.teams[obj.team][_G.game.rounds[i].turns[I].player] then
+                            if _G.game.rounds[i].turns[I].card ~= "bird" then
+                                if string.sub(_G.game.rounds[i].turns[I].card, 1, 1) ~= string.sub(_G.game.trump, 1, 1) then
+                                    if _G.game.rounds[i].turns[I].player < 3 then
+                                        opp1hasTrump = false
+                                    else
+                                        opp2hasTrump = false
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        if not opp1hasTrump and not opp2hasTrump then
+            return true
+        end
+    else
+        return false
+    end
+end
+
 local rtn = {}
 rtn.new = function(ID, team)
     local obj = {}
@@ -22,6 +101,7 @@ rtn.new = function(ID, team)
         obj.didPass = false
         obj.handIsSorted = false
         obj.tookNest = false
+        obj.nestReject = nil
     end
     obj.sortHand = function(trump)
         local redCards = {}
@@ -602,6 +682,7 @@ rtn.new = function(ID, team)
         obj.sortHand(trump)
         obj.showHand()
         local nestReject = obj.sortOutNest(trump)
+        obj.nestReject = nestReject
         if obj.myHand then
             display.remove(obj.myHand)
         end
@@ -613,7 +694,7 @@ rtn.new = function(ID, team)
     obj.layCard = function()
         local cardID = 1
         -- play the color thats led
-        -- if you are not the lead
+        -- unless you are first
         if _G.game.rounds and _G.game.rounds[_G.game.thisRound].turns and #_G.game.rounds[_G.game.thisRound].turns > 0 then
             local cardLed = _G.game.rounds[_G.game.thisRound].turns[1].card
             local color = string.sub(cardLed, 1, 1)
@@ -638,6 +719,21 @@ rtn.new = function(ID, team)
             -- if you have the nest
             if obj.tookNest then
                 cardID = #obj.cards
+                -- stop laying trump if your opponents are out of trump
+                local oppOutOfTrump = oppHasTrump(obj)
+                -- if you have trump
+                if obj.cards[#obj.cards] == "bird" or string.sub(obj.cards[#obj.cards], 1, 1) ==
+                    string.sub(_G.game.trump, 1, 1) then
+                    if oppOutOfTrump then
+                        for c = #obj.cards, 1, -1 do
+                            if string.sub(obj.cards[c], 1, 1) ~= string.sub(_G.game.trump, 1, 1) and obj.cards[c] ~=
+                                "bird" then
+                                cardID = c
+                                break
+                            end
+                        end
+                    end
+                end
             end
         end
         -- lay card
