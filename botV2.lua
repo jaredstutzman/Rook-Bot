@@ -14,8 +14,9 @@ rtn.new = function(ID, team)
     obj.didPass = false
     obj.handIsSorted = false
     obj.tookNest = false
-    obj.myHandX = ((obj.ID - 1) % 2 + 1) * 300 - 450 + display.contentCenterX
+    -- player 1 is in the left, player 2 is in the right
     obj.myHandX = display.contentCenterX + 150 - (math.abs(2.5 - obj.ID) - 0.5) * 300
+    -- player 1 is on the top, player 2 is on the bottom
     obj.myHandY = math.ceil(obj.ID / 2) * 200 - 300 + display.contentCenterY + 20
     obj.reset = function()
         obj.didPass = false
@@ -641,7 +642,6 @@ rtn.new = function(ID, team)
         end
         -- lay card
         local card = obj.cards[cardID]
-        print(card)
         if card == nil then
             local test
         end
