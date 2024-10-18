@@ -526,11 +526,12 @@ rtn.new = function(ID, team)
                 table.remove(posibleEliminies, c)
             end
         end
-        local countColor = {}
-        countColor.r = {}
-        countColor.b = {}
-        countColor.y = {}
-        countColor.g = {}
+        local countColor = {
+            r = {},
+            b = {},
+            y = {},
+            g = {}
+        }
         -- prioritize all the posibleEliminies to get rid of some first
         for c = 1, #posibleEliminies do
             local card = obj.cards[posibleEliminies[c]]
@@ -545,99 +546,44 @@ rtn.new = function(ID, team)
                 priority = priority
             }
         end
+        local cardCounts = {
+            r = {},
+            b = {},
+            y = {},
+            g = {}
+        }
+        for k, v in pairs(cardCounts) do
+            for c = 1, #obj.cards do
+                if _G.cardMatches(obj.cards[c], k) then
+                    v[#v + 1] = obj.cards[c]
+                end
+            end
+        end
         -- if there is only one card and it is a pointer don't keep it
-        if countColor.r[1] then
-            if #obj.cardDetails.redCards == 1 then
-                -- then it is points
-                if posibleEliminies[countColor.r[1]].priority == 4 then
-                    posibleEliminies[countColor.r[1]].priority = 1
-                end
-            elseif #obj.cardDetails.redCards == 2 then
-                for c = 1, #countColor.r do
-                    if posibleEliminies[countColor.r[c]].priority == 4 then
-                        posibleEliminies[countColor.r[c]].priority = 2
+        for k, v in pairs(countColor) do
+            if v[1] then
+                if #cardCounts[k] == 1 then
+                    -- then it is points
+                    if posibleEliminies[v[1]].priority == 4 then
+                        posibleEliminies[v[1]].priority = 1
                     else
-                        posibleEliminies[countColor.r[c]].priority = 3
+                        posibleEliminies[v[1]].priority = 3
                     end
-                end
-            elseif #obj.cardDetails.redCards == 3 then
-                for c = 1, #countColor.r do
-                    if posibleEliminies[countColor.r[c]].priority == 4 then
-                        posibleEliminies[countColor.r[c]].priority = 3
-                    else
-                        posibleEliminies[countColor.r[c]].priority = 4
+                elseif #cardCounts[k] == 2 then
+                    for c = 1, #v do
+                        if posibleEliminies[v[c]].priority == 4 then
+                            posibleEliminies[v[c]].priority = 2
+                        else
+                            posibleEliminies[v[c]].priority = 3.5
+                        end
                     end
-                end
-            end
-        end
-        if countColor.b[1] then
-            if #obj.cardDetails.blackCards == 1 then
-                -- then it is points
-                if posibleEliminies[countColor.b[1]].priority == 4 then
-                    posibleEliminies[countColor.b[1]].priority = 1
-                end
-            elseif #obj.cardDetails.blackCards == 2 then
-                for c = 1, #countColor.b do
-                    if posibleEliminies[countColor.b[1]].priority == 4 then
-                        posibleEliminies[countColor.b[1]].priority = 2
-                    else
-                        posibleEliminies[countColor.b[1]].priority = 3
-                    end
-                end
-            elseif #obj.cardDetails.blackCards == 3 then
-                for c = 1, #countColor.b do
-                    if posibleEliminies[countColor.b[c]].priority == 4 then
-                        posibleEliminies[countColor.b[c]].priority = 3
-                    else
-                        posibleEliminies[countColor.b[c]].priority = 4
-                    end
-                end
-            end
-        end
-        if countColor.y[1] then
-            if #obj.cardDetails.yellowCards == 1 then
-                -- then it is points
-                if posibleEliminies[countColor.y[1]].priority == 4 then
-                    posibleEliminies[countColor.y[1]].priority = 1
-                end
-            elseif #obj.cardDetails.yellowCards == 2 then
-                for c = 1, #countColor.y do
-                    if posibleEliminies[countColor.y[1]].priority == 4 then
-                        posibleEliminies[countColor.y[1]].priority = 2
-                    else
-                        posibleEliminies[countColor.y[1]].priority = 3
-                    end
-                end
-            elseif #obj.cardDetails.yellowCards == 3 then
-                for c = 1, #countColor.y do
-                    if posibleEliminies[countColor.y[c]].priority == 4 then
-                        posibleEliminies[countColor.y[c]].priority = 3
-                    else
-                        posibleEliminies[countColor.y[c]].priority = 4
-                    end
-                end
-            end
-        end
-        if countColor.g[1] then
-            if #obj.cardDetails.greenCards == 1 then
-                -- then it is points
-                if posibleEliminies[countColor.g[1]].priority == 4 then
-                    posibleEliminies[countColor.g[1]].priority = 1
-                end
-            elseif #obj.cardDetails.greenCards == 2 then
-                for c = 1, #countColor.g do
-                    if posibleEliminies[countColor.g[c]].priority == 4 then
-                        posibleEliminies[countColor.g[c]].priority = 2
-                    else
-                        posibleEliminies[countColor.g[c]].priority = 3
-                    end
-                end
-            elseif #obj.cardDetails.greenCards == 3 then
-                for c = 1, #countColor.g do
-                    if posibleEliminies[countColor.g[c]].priority == 4 then
-                        posibleEliminies[countColor.g[c]].priority = 3
-                    else
-                        posibleEliminies[countColor.g[c]].priority = 4
+                elseif #cardCounts[k] == 3 then
+                    for c = 1, #v do
+                        if posibleEliminies[v[c]].priority == 4 then
+                            posibleEliminies[v[c]].priority = 3
+                        else
+                            posibleEliminies[v[c]].priority = 4
+                        end
                     end
                 end
             end
@@ -666,7 +612,6 @@ rtn.new = function(ID, team)
     obj.takeNest = function(nest)
         obj.cards = table.copy(nest, obj.cards)
         obj.tookNest = true
-        -- obj.cards = {"g10", "b10", "b11", "b1", "y11", "y13", "y14", "y1", "r9", "r12", "r13", "r1"}
         obj.sortHand()
         obj.showHand()
         local trump = obj.chooseTrump()
@@ -687,8 +632,9 @@ rtn.new = function(ID, team)
         local cardID = 1
         -- play the color thats led
         -- unless you are first
-        if _G.game.rounds and _G.game.rounds[_G.game.thisRound].turns and #_G.game.rounds[_G.game.thisRound].turns > 0 then
-            local cardLed = _G.game.rounds[_G.game.thisRound].turns[1].card
+        local turns = _G.game.rounds[_G.game.thisRound].turns
+        if turns and #turns > 0 then
+            local cardLed = turns[1].card
             for c = 1, #obj.cards do
                 -- it's the same color
                 if _G.cardMatches(obj.cards[c], cardLed) then

@@ -37,8 +37,8 @@ local bids = {}
 _G.game = {}
 _G.game.bids = bids
 _G.game.thisRound = 0
+_G.game.rounds = {}
 -- _G.game.trump
--- _G.game.rounds
 -- create deck
 local colors = {"r", "b", "y", "g"}
 for c = 1, #colors do
@@ -353,9 +353,6 @@ local step = function()
             passedPlayers = {}
         end
     elseif isLaying then
-        if _G.game.rounds == nil then
-            _G.game.rounds = {}
-        end
         local round = _G.game.rounds[#_G.game.rounds]
         if round == nil or #round.turns == 4 then
             -- the first time the player with the nest leads
@@ -460,10 +457,10 @@ local step = function()
     playerTurn = playerTurn % 4 + 1
 end
 
-timer.performWithDelay(1, step, -1)
--- for i = 1, 50000 do
---     step()
--- end
+-- timer.performWithDelay(1, step, -1)
+for i = 1, 8000 do
+    step()
+end
 
 -- TODO: add a manual control for speed, pause, etc.
 -- TODO: add a control to turn off visuals
