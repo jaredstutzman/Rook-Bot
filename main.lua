@@ -189,9 +189,9 @@ end
 -- display a card
 _G.showCard = function(color, number)
     local card = display.newGroup()
-    card.back = display.newRoundedRect(card, 0, 0, 90, 144, 7)
+    card.back = display.newRoundedRect(card, 0, 0, 70, 112, 7)
     card.back:setFillColor(1, 1, 1)
-    card.back.strokeWidth = 5
+    card.back.strokeWidth = 3
     if color then
         card.name = color .. number
     else
@@ -210,24 +210,24 @@ _G.showCard = function(color, number)
     end
     card.back:setStrokeColor(unpack(rgbColor))
     if (number == "bird") then
-        card.front = display.newImageRect(card, "bird.png", 1169 * 0.05, 1185 * 0.05)
-        card.topText = display.newText(card, number, 0, 0, "AmericanTypewriter-Semibold", 10)
+        card.front = display.newImageRect(card, "bird.png", 1169 * 0.035, 1185 * 0.035)
+        card.topText = display.newText(card, number, 0, 0, "AmericanTypewriter-Semibold", 7)
         card.topText:setFillColor(unpack(rgbColor))
         card.topText.x = -card.back.width * 0.34
         card.topText.y = -card.back.height * 0.43
-        card.bottomText = display.newText(card, number, 0, 0, "AmericanTypewriter-Semibold", 10)
+        card.bottomText = display.newText(card, number, 0, 0, "AmericanTypewriter-Semibold", 7)
         card.bottomText:setFillColor(unpack(rgbColor))
         card.bottomText.x = card.back.width * 0.34
         card.bottomText.y = card.back.height * 0.43
         card.bottomText.rotation = 180
     else
-        card.front = display.newText(card, number, 0, 0, "AmericanTypewriter-Semibold", 60)
+        card.front = display.newText(card, number, 0, 0, "AmericanTypewriter-Semibold", 42)
         card.front:setFillColor(unpack(rgbColor))
-        card.topNumber = display.newText(card, number, 0, 0, "AmericanTypewriter-Semibold", 10)
+        card.topNumber = display.newText(card, number, 0, 0, "AmericanTypewriter-Semibold", 7)
         card.topNumber:setFillColor(unpack(rgbColor))
         card.topNumber.x = -card.back.width * 0.38
         card.topNumber.y = -card.back.height * 0.43
-        card.bottomNumber = display.newText(card, number, 0, 0, "AmericanTypewriter-Semibold", 10)
+        card.bottomNumber = display.newText(card, number, 0, 0, "AmericanTypewriter-Semibold", 7)
         card.bottomNumber:setFillColor(unpack(rgbColor))
         card.bottomNumber.x = card.back.width * 0.38
         card.bottomNumber.y = card.back.height * 0.43
@@ -240,7 +240,7 @@ _G.showHand = function(playerID, cards)
     local hand = display.newGroup()
     -- how much to spread the cards
     local spreadAngle = 8
-    local spread = 10.8
+    local spread = 10
     local player = players[playerID]
     local theseCards = player.cards
     if cards then

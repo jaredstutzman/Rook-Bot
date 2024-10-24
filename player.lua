@@ -141,7 +141,7 @@ rtn.new = function(ID, team)
         -- display bid
         display.remove(obj.myBidDisplay)
         obj.myBidDisplay = _G.showBid(sartingBid)
-        obj.myBidDisplay.x = -40
+        obj.myBidDisplay.x = -20
         obj.myBidDisplay.y = 0
         obj.group:insert(obj.myBidDisplay)
 
@@ -173,18 +173,20 @@ rtn.new = function(ID, team)
             onPress = onStepperPress,
             initialValue = 1
         })
-        newStepper.x = -40
+        newStepper.xScale = 0.7
+        newStepper.yScale = 0.8
+        newStepper.x = -20
         newStepper.y = 30
         obj.group:insert(newStepper)
 
         local submitButton = display.newGroup()
-        submitButton.back = display.newRoundedRect(0, 0, 80, 50, 10)
+        submitButton.back = display.newRoundedRect(0, 0, 45, 30, 6)
         submitButton.text = display.newText({
             text = "Submit",
             x = 0,
             y = 0,
             font = native.systemFontBold,
-            fontSize = 30
+            fontSize = 19
         })
         submitButton.back.strokeWidth = 3
         submitButton.back:setStrokeColor(0, 0, 0)
@@ -192,7 +194,7 @@ rtn.new = function(ID, team)
         submitButton.text:setFillColor(0.3, 0.8, 0.2)
         submitButton:insert(submitButton.back)
         submitButton:insert(submitButton.text)
-        submitButton.x = 40
+        submitButton.x = 50
         submitButton.y = 0
         obj.group:insert(submitButton)
         print(submitButton:localToContent(0, 0))
