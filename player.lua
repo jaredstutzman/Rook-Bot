@@ -14,7 +14,7 @@ rtn.new = function(ID, team)
     obj.handIsSorted = false
     obj.tookNest = false
     -- players in order clockwise from the top left
-    obj.group.x = (math.ceil((obj.ID % 4 + 1) / 2) * 2 - 3) * 150 + display.contentCenterX
+    obj.group.x = (math.ceil((obj.ID % 4 + 1) / 2) * 2 - 3) * 100 + display.contentCenterX
     obj.group.y = (math.ceil(obj.ID / 2) * 2 - 3) * 100 + display.contentCenterY + 20
     obj.reset = function()
         obj.didPass = false
@@ -141,8 +141,8 @@ rtn.new = function(ID, team)
         -- display bid
         display.remove(obj.myBidDisplay)
         obj.myBidDisplay = _G.showBid(sartingBid)
-        obj.myBidDisplay.x = -80
-        obj.myBidDisplay.y = -10
+        obj.myBidDisplay.x = -40
+        obj.myBidDisplay.y = 0
         obj.group:insert(obj.myBidDisplay)
 
         -- display bid choices
@@ -173,7 +173,7 @@ rtn.new = function(ID, team)
             onPress = onStepperPress,
             initialValue = 1
         })
-        newStepper.x = -80
+        newStepper.x = -40
         newStepper.y = 30
         obj.group:insert(newStepper)
 
@@ -192,7 +192,7 @@ rtn.new = function(ID, team)
         submitButton.text:setFillColor(0.3, 0.8, 0.2)
         submitButton:insert(submitButton.back)
         submitButton:insert(submitButton.text)
-        submitButton.x = 0
+        submitButton.x = 40
         submitButton.y = 0
         obj.group:insert(submitButton)
         print(submitButton:localToContent(0, 0))

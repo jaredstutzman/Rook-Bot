@@ -68,7 +68,7 @@ teams[2] = {
 
 -- setup the scoreboard
 local scoreboard1 = display.newGroup()
-scoreboard1.back = display.newRect(0, 0, 90, 90)
+scoreboard1.back = display.newRect(0, 0, 80, 80)
 scoreboard1.back:setFillColor(0.2, 0.2, 0.2)
 scoreboard1:insert(scoreboard1.back)
 scoreboard1.title = display.newText({
@@ -78,7 +78,7 @@ scoreboard1.title = display.newText({
     fontSize = 15
 })
 scoreboard1.title.x = 0
-scoreboard1.title.y = -35
+scoreboard1.title.y = -30
 scoreboard1:insert(scoreboard1.title)
 scoreboard1.score = display.newText({
     text = "0",
@@ -93,7 +93,7 @@ scoreboard1.bid = display.newText({
     text = "bid: N/A",
     color = {0, 0, 0},
     font = native.systemFontBold,
-    fontSize = 20
+    fontSize = 17
 })
 scoreboard1.bid.baseText = "bid: "
 scoreboard1.bid.defaultText = "bid: N/A"
@@ -104,7 +104,7 @@ scoreboard1.x = display.contentCenterX + display.actualContentWidth / 2 - scoreb
 scoreboard1.y = display.contentCenterY + display.actualContentHeight / 2 - scoreboard1.back.height / 2
 backGroup:insert(scoreboard1)
 local scoreboard2 = display.newGroup()
-scoreboard2.back = display.newRect(0, 0, 90, 90)
+scoreboard2.back = display.newRect(0, 0, 80, 80)
 scoreboard2.back:setFillColor(0.2, 0.2, 0.2)
 scoreboard2:insert(scoreboard2.back)
 scoreboard2.title = display.newText({
@@ -114,7 +114,7 @@ scoreboard2.title = display.newText({
     fontSize = 15
 })
 scoreboard2.title.x = 0
-scoreboard2.title.y = -35
+scoreboard2.title.y = -30
 scoreboard2:insert(scoreboard2.title)
 scoreboard2.score = display.newText({
     text = "0",
@@ -129,7 +129,7 @@ scoreboard2.bid = display.newText({
     text = "bid: N/A",
     color = {0, 0, 0},
     font = native.systemFontBold,
-    fontSize = 20
+    fontSize = 17
 })
 scoreboard2.bid.baseText = "bid: "
 scoreboard2.bid.defaultText = "bid: N/A"
@@ -189,7 +189,7 @@ end
 -- display a card
 _G.showCard = function(color, number)
     local card = display.newGroup()
-    card.back = display.newRoundedRect(card, 0, 0, 100, 160, 7)
+    card.back = display.newRoundedRect(card, 0, 0, 90, 144, 7)
     card.back:setFillColor(1, 1, 1)
     card.back.strokeWidth = 5
     if color then
@@ -240,7 +240,7 @@ _G.showHand = function(playerID, cards)
     local hand = display.newGroup()
     -- how much to spread the cards
     local spreadAngle = 8
-    local spread = 12
+    local spread = 10.8
     local player = players[playerID]
     local theseCards = player.cards
     if cards then
@@ -304,7 +304,7 @@ end
 _G.showBid = function(bid)
     local bidGroup = display.newGroup()
 
-    bidGroup.Back = display.newRoundedRect(0, 0, 60, 35, 5)
+    bidGroup.Back = display.newRoundedRect(0, 0, 54, 33.5, 5)
     bidGroup.Back.strokeWidth = 3
     bidGroup.Back:setStrokeColor(0, 0, 0)
     bidGroup:insert(bidGroup.Back)
