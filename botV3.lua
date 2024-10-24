@@ -75,16 +75,16 @@ end
 local rtn = {}
 rtn.new = function(ID, team)
     local obj = {}
+    obj.group = display.newGroup()
     obj.ID = ID
     obj.team = team
     obj.cards = {}
     obj.didPass = false
     obj.handIsSorted = false
     obj.tookNest = false
-    -- player 1 is in the left, player 2 is in the right
-    obj.myHandX = display.contentCenterX + 150 - (math.abs(2.5 - obj.ID) - 0.5) * 300
-    -- player 1 is on the top, player 2 is on the bottom
-    obj.myHandY = math.ceil(obj.ID / 2) * 200 - 300 + display.contentCenterY + 20
+    -- players in order clockwise from the top left
+    obj.group.x = (math.ceil((obj.ID % 4 + 1) / 2) * 2 - 3) * 150 + display.contentCenterX
+    obj.group.y = (math.ceil(obj.ID / 2) * 2 - 3) * 100 + display.contentCenterY + 20
     obj.reset = function()
         obj.didPass = false
         obj.handIsSorted = false
@@ -92,10 +92,18 @@ rtn.new = function(ID, team)
         obj.nestReject = nil
     end
     obj.sortHand = function(trump)
-        local redCards = {}
-        local blackCards = {}
-        local yellowCards = {}
-        local greenCards = {}
+        local redCards = {
+            color = "red"
+        }
+        local blackCards = {
+            color = "black"
+        }
+        local yellowCards = {
+            color = "yellow"
+        }
+        local greenCards = {
+            color = "green"
+        }
         local hasBird = false
         for c = #obj.cards, 1, -1 do
             -- deal with bird first
@@ -140,36 +148,44 @@ rtn.new = function(ID, team)
         addPrefix(yellowCards, "y")
         addPrefix(greenCards, "g")
         local sortedCards = {redCards, blackCards, yellowCards, greenCards}
+        -- remove empty colors
+        for i = 4, 1, -1 do
+            if not (trump and _G.cardMatches(sortedCards[i].color, trump)) then
+                if #sortedCards[i] == 0 and not hasBird then
+                    table.remove(sortedCards, i)
+                end
+            end
+        end
         table.sort(sortedCards, function(a, b)
             -- trump goes first
-            if (trump and #a > 0 and string.sub(a[1], 1, 1) == string.sub(trump, 1, 1)) then
+            if (trump and _G.cardMatches(a.color, trump)) then
                 return false
             end
-            if (trump and #b > 0 and string.sub(b[1], 1, 1) == string.sub(trump, 1, 1)) then
+            if (trump and _G.cardMatches(b.color, trump)) then
                 return true
             end
             -- there is no trump so sort by size
             return #a < #b
         end)
         if hasBird then
+            local foundCardBiggerThanBird = false
             for c = 1, #sortedCards[#sortedCards] do
                 -- the bird should go infront of everything 10 and lower
                 if tonumber(string.sub(sortedCards[#sortedCards][c], 2)) > 10 then
                     table.insert(sortedCards[#sortedCards], c, "bird")
+                    foundCardBiggerThanBird = true
                     break
                 end
                 -- the bird should go behind 1
                 if tonumber(string.sub(sortedCards[#sortedCards][c], 2)) == 1 then
                     table.insert(sortedCards[#sortedCards], c, "bird")
+                    foundCardBiggerThanBird = true
                     break
                 end
             end
             -- if all the cards are lower than the bird then add the bird to the end
-            if tonumber(string.sub(sortedCards[#sortedCards][#sortedCards[#sortedCards]], 2)) < 11 then
-                -- the bird should go behind 1
-                if tonumber(string.sub(sortedCards[#sortedCards][#sortedCards[#sortedCards]], 2)) ~= 1 then
-                    table.insert(sortedCards[#sortedCards], #sortedCards[#sortedCards] + 1, "bird")
-                end
+            if not foundCardBiggerThanBird then
+                table.insert(sortedCards[#sortedCards], #sortedCards[#sortedCards] + 1, "bird")
             end
         end
         obj.cards = table.copy(unpack(sortedCards))
@@ -179,10 +195,11 @@ rtn.new = function(ID, team)
             display.remove(obj.myHand)
         end
         obj.myHand = _G.showHand(obj.ID)
-        obj.myHand.x = obj.myHandX
-        obj.myHand.y = obj.myHandY
+        obj.myHand.x = 0
+        obj.myHand.y = 0
+        obj.group:insert(obj.myHand)
     end
-    obj.bid = function(bids, highestBid, passedPlayers)
+    obj.bid = function(bids, highestBid, passedPlayers, submitBid)
         obj.didPass = false
         local largestSafeBid = minBid
         local idealBid = largestSafeBid
@@ -333,7 +350,12 @@ rtn.new = function(ID, team)
         if idealBid == "pass" then
             obj.didPass = true
         end
-        return idealBid
+        display.remove(obj.myBidDisplay)
+        obj.myBidDisplay = _G.showBid(idealBid)
+        obj.myBidDisplay.x = -80
+        obj.myBidDisplay.y = -10
+        obj.group:insert(obj.myBidDisplay)
+        submitBid(idealBid)
     end
     obj.chooseTrump = function()
         local redCards = {}
@@ -609,7 +631,7 @@ rtn.new = function(ID, team)
         end
         return newNest
     end
-    obj.takeNest = function(nest)
+    obj.takeNest = function(nest, putBack)
         obj.cards = table.copy(nest, obj.cards)
         obj.tookNest = true
         obj.sortHand()
@@ -623,12 +645,13 @@ rtn.new = function(ID, team)
         if obj.myHand then
             display.remove(obj.myHand)
         end
-        obj.myHand = _G.showHand(obj.ID)
-        obj.myHand.x = obj.myHandX
-        obj.myHand.y = obj.myHandY
-        return nestReject
+        obj.sortHand(trump)
+        obj.showHand()
+        putBack(nestReject)
     end
-    obj.layCard = function()
+    obj.layCard = function(submitCard)
+        -- sort hand with trump last
+        obj.sortHand(_G.game.trump)
         local cardID = 1
         -- play the color thats led
         -- unless you are first
@@ -664,13 +687,14 @@ rtn.new = function(ID, team)
         end
         -- lay card
         local card = obj.cards[cardID]
-        if card == nil then
-            local test
-        end
         local cardObj = obj.myHand.cards[cardID]
+        local cardLocationX, cardLocationY = cardObj:localToContent(0, 0)
+        display.currentStage:insert(cardObj)
+        cardObj.x = cardLocationX
+        cardObj.y = cardLocationY
         transition.to(cardObj, {
-            x = display.contentCenterX - obj.myHand.x,
-            y = display.contentCenterY - obj.myHand.y,
+            x = display.contentCenterX,
+            y = display.contentCenterY,
             time = 100,
             onComplete = function()
                 display.remove(cardObj)
@@ -678,7 +702,8 @@ rtn.new = function(ID, team)
         })
         table.remove(obj.cards, cardID)
         table.remove(obj.myHand.cards, cardID)
-        return card
+        obj.showHand()
+        submitCard(card)
     end
     return obj
 end

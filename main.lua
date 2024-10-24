@@ -17,7 +17,8 @@ end
 -- print(#true)
 -- print(#false)
 local botV1 = require("botV3")
-local botV2 = require("botV2")
+local botV2 = require("botV3")
+local playerV1 = require("player")
 local backGroup = display.newGroup()
 local setup = true
 local isBiding = false
@@ -26,9 +27,10 @@ local gameIsWon = false
 local highestBid = 0
 local playerWithNest
 local playerStartBid = math.random(4)
+local waitingOnPlayer = false
 local cardPile
 local passedPlayers = {}
-local playerTurn = 1
+local playerTurn = math.random(4)
 local players = {}
 local teams = {}
 local deck = {}
@@ -49,10 +51,10 @@ for c = 1, #colors do
     deck[#deck + 1] = colors[c] .. "1"
 end
 deck[#deck + 1] = "bird"
-players[1] = botV1.new(1, 1)
+players[1] = botV2.new(1, 1)
 players[2] = botV2.new(2, 2)
 players[3] = botV1.new(3, 1)
-players[4] = botV2.new(4, 2)
+players[4] = playerV1.new(4, 2)
 teams[1] = {
     [1] = players[1],
     [3] = players[3],
@@ -63,6 +65,80 @@ teams[2] = {
     [4] = players[4],
     points = 0
 }
+
+-- setup the scoreboard
+local scoreboard1 = display.newGroup()
+scoreboard1.back = display.newRect(0, 0, 90, 90)
+scoreboard1.back:setFillColor(0.2, 0.2, 0.2)
+scoreboard1:insert(scoreboard1.back)
+scoreboard1.title = display.newText({
+    text = "TEAM 1",
+    color = {0, 0, 0},
+    font = native.systemFontBold,
+    fontSize = 15
+})
+scoreboard1.title.x = 0
+scoreboard1.title.y = -35
+scoreboard1:insert(scoreboard1.title)
+scoreboard1.score = display.newText({
+    text = "0",
+    color = {0, 0, 0},
+    font = native.systemFontBold,
+    fontSize = 25
+})
+scoreboard1.score.x = 0
+scoreboard1.score.y = 0
+scoreboard1:insert(scoreboard1.score)
+scoreboard1.bid = display.newText({
+    text = "bid: N/A",
+    color = {0, 0, 0},
+    font = native.systemFontBold,
+    fontSize = 20
+})
+scoreboard1.bid.baseText = "bid: "
+scoreboard1.bid.defaultText = "bid: N/A"
+scoreboard1.bid.x = 0
+scoreboard1.bid.y = 30
+scoreboard1:insert(scoreboard1.bid)
+scoreboard1.x = display.contentCenterX + display.actualContentWidth / 2 - scoreboard1.back.width / 2
+scoreboard1.y = display.contentCenterY + display.actualContentHeight / 2 - scoreboard1.back.height / 2
+backGroup:insert(scoreboard1)
+local scoreboard2 = display.newGroup()
+scoreboard2.back = display.newRect(0, 0, 90, 90)
+scoreboard2.back:setFillColor(0.2, 0.2, 0.2)
+scoreboard2:insert(scoreboard2.back)
+scoreboard2.title = display.newText({
+    text = "TEAM 2",
+    color = {0, 0, 0},
+    font = native.systemFontBold,
+    fontSize = 15
+})
+scoreboard2.title.x = 0
+scoreboard2.title.y = -35
+scoreboard2:insert(scoreboard2.title)
+scoreboard2.score = display.newText({
+    text = "0",
+    color = {0, 0, 0},
+    font = native.systemFontBold,
+    fontSize = 25
+})
+scoreboard2.score.x = 0
+scoreboard2.score.y = 0
+scoreboard2:insert(scoreboard2.score)
+scoreboard2.bid = display.newText({
+    text = "bid: N/A",
+    color = {0, 0, 0},
+    font = native.systemFontBold,
+    fontSize = 20
+})
+scoreboard2.bid.baseText = "bid: "
+scoreboard2.bid.defaultText = "bid: N/A"
+scoreboard2.bid.x = 0
+scoreboard2.bid.y = 30
+scoreboard2:insert(scoreboard2.bid)
+scoreboard2.x = display.contentCenterX - display.actualContentWidth / 2 + scoreboard2.back.width / 2
+scoreboard2.y = display.contentCenterY + display.actualContentHeight / 2 - scoreboard2.back.height / 2
+backGroup:insert(scoreboard2)
 _G.teams = teams
 -- check if a team is out of trump
 _G.doesHaveThisColor = function(team, color)
@@ -87,13 +163,11 @@ _G.cardMatches = function(card, color)
     local cardAbrev = string.sub(card, 1, 1)
     local colorAbrev = string.sub(color, 1, 1)
     -- is color trump ?
-    if string.lower(colorAbrev) == "t" then
+    if string.lower(colorAbrev) == "t" or color == "bird" then
         if _G.game.trump == nil then
             return false
         end
         colorAbrev = string.sub(_G.game.trump, 1, 1)
-    elseif color == "bird" then
-        return card == "bird"
     end
     -- the bird only matches trump
     if card == "bird" then
@@ -184,11 +258,69 @@ _G.showHand = function(playerID, cards)
         thisCard.yScale = 0.8
         thisCard.x = (c - #theseCards / 2 - 0.5) * spread
         thisCard.y = math.abs(c - #theseCards / 2 - 0.5) ^ 1.5 * spread * 0.1
+        thisCard.homeX = thisCard.x
+        thisCard.homeY = thisCard.y
+        thisCard.homeRotation = thisCard.rotation
+        thisCard.rasedX = thisCard.x
+        thisCard.rasedY = thisCard.y - 40
+        thisCard.isRaised = false
         thisCard.rotation = (c - #theseCards / 2 - 0.5) * spreadAngle
+        thisCard.value = theseCards[c]
+        thisCard.ID = c
         hand:insert(thisCard)
+        thisCard.raise = function(self)
+            self.isRaised = true
+            self.x = self.homeX
+            self.y = self.homeY
+            transition.cancel(self)
+            transition.to(self, {
+                time = 100,
+                x = self.rasedX,
+                y = self.rasedY
+            })
+        end
+        thisCard.lower = function(self)
+            self.isRaised = false
+            self.x = self.rasedX
+            self.y = self.rasedY
+            transition.cancel(self)
+            transition.to(self, {
+                time = 100,
+                x = self.homeX,
+                y = self.homeY
+            })
+        end
+        thisCard:addEventListener("touch", function(event)
+            if hand.touchEvent then
+                hand.touchEvent(event, thisCard)
+            end
+            return true
+        end)
         hand.cards[#hand.cards + 1] = thisCard
     end
     return hand
+end
+-- show what was bid
+_G.showBid = function(bid)
+    local bidGroup = display.newGroup()
+
+    bidGroup.Back = display.newRoundedRect(0, 0, 60, 35, 5)
+    bidGroup.Back.strokeWidth = 3
+    bidGroup.Back:setStrokeColor(0, 0, 0)
+    bidGroup:insert(bidGroup.Back)
+    bidGroup.bidText = display.newText({
+        text = bid,
+        x = 0,
+        y = 0,
+        font = native.systemFontBold,
+        fontSize = 30
+    })
+    bidGroup.bidText:setFillColor(0, 0, 0)
+    bidGroup:insert(bidGroup.bidText)
+    bidGroup.setText = function(self, newBid)
+        self.bidText.text = newBid
+    end
+    return bidGroup
 end
 -- shuffle cards
 local shuffleCards = function()
@@ -306,6 +438,7 @@ local countPoints = function(team, lastRound)
 end
 local numberOfBids = 0
 local step = function()
+    playerTurn = playerTurn % 4 + 1
     local thisPlayer = players[playerTurn]
     if setup then
         -- TODO: trump = nil
@@ -326,8 +459,8 @@ local step = function()
             playerTurn = playerStartBid
             thisPlayer = players[playerTurn]
         end
-        if thisPlayer.didPass == false then
-            local bid = thisPlayer.bid(bids, highestBid, passedPlayers)
+        local bidSubmit = function(bid)
+            waitingOnPlayer = false
             bids[#bids + 1] = {
                 player = playerTurn,
                 bid = bid
@@ -338,19 +471,41 @@ local step = function()
             else
                 passedPlayers[playerTurn] = 1
             end
+            local numberOfPassed = 0
+            numberOfPassed = numberOfPassed + (passedPlayers[1] or 0)
+            numberOfPassed = numberOfPassed + (passedPlayers[2] or 0)
+            numberOfPassed = numberOfPassed + (passedPlayers[3] or 0)
+            numberOfPassed = numberOfPassed + (passedPlayers[4] or 0)
+            if numberOfPassed == 3 then
+                isBiding = false
+                isLaying = true
+                -- put cards back
+                local returnCards = function(_cards)
+                    waitingOnPlayer = false
+                    nest = _cards
+                end
+                -- give the player the nest then put there unwanted cards back
+                waitingOnPlayer = true
+                players[playerWithNest].takeNest(nest, returnCards)
+                bids.lastBid = highestBid
+                passedPlayers = {}
+                -- don't show the bids
+                for i = 1, #players do
+                    display.remove(players[i].myBidDisplay)
+                end
+                -- put the bid on the board
+                if players[playerWithNest].team == 1 then
+                    scoreboard1.bid.text = scoreboard1.bid.baseText .. tostring(highestBid)
+                    scoreboard2.bid.text = scoreboard2.bid.defaultText
+                else
+                    scoreboard2.bid.text = scoreboard2.bid.baseText .. tostring(highestBid)
+                    scoreboard1.bid.text = scoreboard1.bid.defaultText
+                end
+            end
         end
-        local numberOfPassed = 0
-        numberOfPassed = numberOfPassed + (passedPlayers[1] or 0)
-        numberOfPassed = numberOfPassed + (passedPlayers[2] or 0)
-        numberOfPassed = numberOfPassed + (passedPlayers[3] or 0)
-        numberOfPassed = numberOfPassed + (passedPlayers[4] or 0)
-        if numberOfPassed == 3 then
-            isBiding = false
-            isLaying = true
-            -- give the player the nest then put there unwanted cards back
-            nest = players[playerWithNest].takeNest(nest)
-            bids.lastBid = highestBid
-            passedPlayers = {}
+        if thisPlayer.didPass == false then
+            waitingOnPlayer = true
+            thisPlayer.bid(bids, highestBid, passedPlayers, bidSubmit)
         end
     elseif isLaying then
         local round = _G.game.rounds[#_G.game.rounds]
@@ -371,52 +526,61 @@ local step = function()
         if round.turns == nil then
             round.turns = {}
         end
-        local cardPlayed = players[playerTurn].layCard()
-        round.turns[#round.turns + 1] = {}
-        round.turns[#round.turns].player = playerTurn
-        round.turns[#round.turns].card = cardPlayed
-        -- show the card layed on the pile
-        timer.performWithDelay(100, function()
-            if cardPile then
-                display.remove(cardPile)
-                cardPile = nil
-            end
-            local pileCards = {}
-            for i = 1, #round.turns do
-                pileCards[#pileCards + 1] = round.turns[i].card
-            end
-            cardPile = _G.showHand(1, pileCards)
-            backGroup:insert(cardPile)
-            cardPile.x = display.contentCenterX
-            cardPile.y = display.contentCenterY
-        end)
-        if #round.turns == 4 then
-            round.wonBy = whoWinsTheDraw(round)
-            local pilePosition = {
-                x = display.contentCenterX - display.actualContentWidth / 2,
-                y = display.contentCenterY + display.actualContentHeight / 2
-            }
-            if teams[1][round.wonBy] then
-                pilePosition = {
-                    x = display.contentCenterX + display.actualContentWidth / 2,
-                    y = display.contentCenterY + display.actualContentHeight / 2
-                }
-            end
+        -- waiting on the player to lay
+        local submitCard = function(cardPlayed)
+            waitingOnPlayer = false
+            round.turns[#round.turns + 1] = {}
+            round.turns[#round.turns].player = playerTurn
+            round.turns[#round.turns].card = cardPlayed
+            -- show the card layed on the pile
             timer.performWithDelay(100, function()
                 if cardPile then
-                    transition.to(cardPile, {
-                        x = pilePosition.x,
-                        y = pilePosition.y,
-                        time = 100
-                    })
+                    display.remove(cardPile)
+                    cardPile = nil
                 end
+                local pileCards = {}
+                for i = 1, #round.turns do
+                    pileCards[#pileCards + 1] = round.turns[i].card
+                end
+                cardPile = _G.showHand(1, pileCards)
+                backGroup:insert(cardPile)
+                cardPile.x = display.contentCenterX
+                cardPile.y = display.contentCenterY
             end)
+            if #round.turns == 4 then
+                round.wonBy = whoWinsTheDraw(round)
+                local pilePosition = {
+                    x = display.contentCenterX - display.actualContentWidth / 2,
+                    y = display.contentCenterY + display.actualContentHeight / 2
+                }
+                if teams[1][round.wonBy] then
+                    pilePosition = {
+                        x = display.contentCenterX + display.actualContentWidth / 2,
+                        y = display.contentCenterY + display.actualContentHeight / 2
+                    }
+                end
+                timer.performWithDelay(200, function()
+                    if cardPile then
+                        transition.to(cardPile, {
+                            x = pilePosition.x,
+                            y = pilePosition.y,
+                            time = 100,
+                            onComplete = function()
+                                display.remove(cardPile)
+                                cardPile = nil
+                            end
+                        })
+                    end
+                end)
+            end
+            deck[#deck + 1] = cardPlayed
+            -- all the cards were layed exept the nest
+            if #deck == 28 then
+                isLaying = false
+            end
         end
-        deck[#deck + 1] = cardPlayed
-        -- all the cards were layed exept the nest
-        if #deck == 28 then
-            isLaying = false
-        end
+        waitingOnPlayer = true
+        players[playerTurn].layCard(submitCard)
     elseif not gameIsWon then
         -- get ready for the next round
         local team = players[playerWithNest].team
@@ -429,6 +593,9 @@ local step = function()
             teams[team].points = teams[team].points - _G.game.bids.lastBid
         end
         teams[otherTeam].points = teams[otherTeam].points + 200 - points
+        -- show the score on the scoreboard
+        scoreboard1.score.text = tostring(teams[1].points)
+        scoreboard2.score.text = tostring(teams[2].points)
         -- put the nest back in the deck
         for i = 5, 1, -1 do
             deck[#deck + 1] = nest[i]
@@ -436,7 +603,7 @@ local step = function()
         end
         setup = true
         -- check if a team won
-        if teams[otherTeam].points > 10000 and teams[otherTeam].points > teams[team].points then
+        if teams[otherTeam].points > 1000 and teams[otherTeam].points > teams[team].points then
             setup = false
             gameIsWon = true
             print("team " .. otherTeam .. " won")
@@ -445,7 +612,7 @@ local step = function()
             print("with " .. teams[team].points .. " points")
         end
         -- check if a team won
-        if teams[team].points > 10000 and teams[team].points > teams[otherTeam].points then
+        if teams[team].points > 1000 and teams[team].points > teams[otherTeam].points then
             setup = false
             gameIsWon = true
             print("team " .. team .. " won")
@@ -454,15 +621,54 @@ local step = function()
             print("with " .. teams[otherTeam].points .. " points")
         end
     end
-    playerTurn = playerTurn % 4 + 1
 end
 
 -- timer.performWithDelay(1, step, -1)
-for i = 1, 8000 do
-    step()
+local time = 0
+local normalTurnTime = 0
+local update = function()
+    time = time + 1
+    if not waitingOnPlayer then
+        normalTurnTime = normalTurnTime + 1
+        if normalTurnTime % 20 == 0 then
+            step()
+        end
+    end
 end
+
+Runtime:addEventListener("enterFrame", update)
 
 -- TODO: add a manual control for speed, pause, etc.
 -- TODO: add a control to turn off visuals
 
 -- TODO: rewrite and clean up
+
+-- local widget = require("widget")
+
+-- -- Set up the picker wheel columns
+-- local columnData = {{
+--     align = "left",
+--     width = 124,
+--     labelPadding = 20,
+--     startIndex = 2,
+--     labels = {"Hoodie", "Short Sleeve", "Long Sleeve", "Sweatshirt"}
+-- }}
+
+-- -- Create the widget
+-- local pickerWheel = widget.newPickerWheel({
+--     x = display.contentCenterX,
+--     top = display.contentHeight - 160,
+--     columns = columnData,
+--     style = "resizable",
+--     width = 280,
+--     rowHeight = 32,
+--     fontSize = 14
+-- })
+
+-- -- Select the third row in the first column
+-- pickerWheel:selectValue(1, 3)
+
+-- -- After 4000 milliseconds (4 seconds), select the fourth row in the second column
+-- timer.performWithDelay(4000, function()
+--     pickerWheel:selectValue(2, 4);
+-- end)
