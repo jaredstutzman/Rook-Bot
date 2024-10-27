@@ -355,7 +355,7 @@ _G.showBid = function(bid)
         x = 0,
         y = 0,
         font = native.systemFontBold,
-        fontSize = 30
+        fontSize = 25
     })
     bidGroup.bidText:setFillColor(0, 0, 0)
     bidGroup:insert(bidGroup.bidText)
@@ -684,7 +684,7 @@ local update = function()
         normalTurnTime = normalTurnTime + 1
         waitTime = 30
         if slowForPlayer then
-            waitTime = 90
+            waitTime = 120
         end
         if normalTurnTime % waitTime == 0 then
             normalTurnTime = 0
