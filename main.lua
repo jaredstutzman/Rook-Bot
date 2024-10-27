@@ -28,6 +28,7 @@ local highestBid = 0
 local playerWithNest
 local playerStartBid = math.random(4)
 local waitingOnPlayer = false
+local slowForPlayer = false
 local cardPile
 local passedPlayers = {}
 local playerTurn = math.random(4)
@@ -186,10 +187,37 @@ _G.cardMatches = function(card, color)
     end
     return false
 end
+-- turn the back side of the card up
+_G.flipCard = function(card)
+    if card.isFlipped then
+        card.isFlipped = false
+        -- show the front of the card when it's flipping over
+        timer.performWithDelay(20, function()
+            card.backSide.isVisible = false
+            card.frontSide.isVisible = true
+        end)
+        transition.to(card, {
+            xScale = 1,
+            time = 90
+        })
+    else
+        card.isFlipped = true
+        -- show the back of the card when it's flipping over
+        timer.performWithDelay(20, function()
+            card.backSide.isVisible = true
+            card.frontSide.isVisible = false
+        end)
+        transition.to(card, {
+            xScale = -1,
+            time = 160
+        })
+    end
+end
 -- display a card
-_G.showCard = function(color, number)
+_G.showCard = function(color, number, direction)
     local card = display.newGroup()
-    card.back = display.newRoundedRect(card, 0, 0, 70, 112, 7)
+    card.frontSide = display.newGroup()
+    card.back = display.newRoundedRect(card.frontSide, 0, 0, 70, 112, 7)
     card.back:setFillColor(1, 1, 1)
     card.back.strokeWidth = 3
     if color then
@@ -210,33 +238,44 @@ _G.showCard = function(color, number)
     end
     card.back:setStrokeColor(unpack(rgbColor))
     if (number == "bird") then
-        card.front = display.newImageRect(card, "bird.png", 1169 * 0.035, 1185 * 0.035)
-        card.topText = display.newText(card, number, 0, 0, "AmericanTypewriter-Semibold", 7)
+        card.front = display.newImageRect(card.frontSide, "bird.png", 1169 * 0.035, 1185 * 0.035)
+        card.topText = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", 7)
         card.topText:setFillColor(unpack(rgbColor))
         card.topText.x = -card.back.width * 0.34
         card.topText.y = -card.back.height * 0.43
-        card.bottomText = display.newText(card, number, 0, 0, "AmericanTypewriter-Semibold", 7)
+        card.bottomText = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", 7)
         card.bottomText:setFillColor(unpack(rgbColor))
         card.bottomText.x = card.back.width * 0.34
         card.bottomText.y = card.back.height * 0.43
         card.bottomText.rotation = 180
     else
-        card.front = display.newText(card, number, 0, 0, "AmericanTypewriter-Semibold", 42)
+        card.front = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", 42)
         card.front:setFillColor(unpack(rgbColor))
-        card.topNumber = display.newText(card, number, 0, 0, "AmericanTypewriter-Semibold", 7)
+        card.topNumber = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", 7)
         card.topNumber:setFillColor(unpack(rgbColor))
         card.topNumber.x = -card.back.width * 0.38
         card.topNumber.y = -card.back.height * 0.43
-        card.bottomNumber = display.newText(card, number, 0, 0, "AmericanTypewriter-Semibold", 7)
+        card.bottomNumber = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", 7)
         card.bottomNumber:setFillColor(unpack(rgbColor))
         card.bottomNumber.x = card.back.width * 0.38
         card.bottomNumber.y = card.back.height * 0.43
         card.bottomNumber.rotation = 180
     end
+    -- add the back side of the card
+    card.backSide = display.newImageRect(card, "card.png", card.back.width, card.back.height)
+    card:insert(card.frontSide)
+    card:insert(card.backSide)
+    if direction == "faceUp" then
+        card.backSide.isVisible = false
+        card.isFlipped = false
+    elseif direction == "faceDown" then
+        card.backSide.isVisible = true
+        card.isFlipped = true
+    end
     return card
 end
 -- display a hand of cards
-_G.showHand = function(playerID, cards)
+_G.showHand = function(playerID, direction, cards)
     local hand = display.newGroup()
     -- how much to spread the cards
     local spreadAngle = 8
@@ -250,9 +289,9 @@ _G.showHand = function(playerID, cards)
     for c = 1, #theseCards do
         local thisCard
         if theseCards[c] == "bird" then
-            thisCard = _G.showCard(nil, theseCards[c])
+            thisCard = _G.showCard(nil, theseCards[c], direction)
         else
-            thisCard = _G.showCard(string.sub(theseCards[c], 1, 1), string.sub(theseCards[c], 2, -1))
+            thisCard = _G.showCard(string.sub(theseCards[c], 1, 1), string.sub(theseCards[c], 2, -1), direction)
         end
         thisCard.xScale = 0.8
         thisCard.yScale = 0.8
@@ -261,10 +300,11 @@ _G.showHand = function(playerID, cards)
         thisCard.homeX = thisCard.x
         thisCard.homeY = thisCard.y
         thisCard.homeRotation = thisCard.rotation
-        thisCard.rasedX = thisCard.x
-        thisCard.rasedY = thisCard.y - 40
-        thisCard.isRaised = false
         thisCard.rotation = (c - #theseCards / 2 - 0.5) * spreadAngle
+        local raisedDistance = 40
+        thisCard.rasedX = thisCard.x + math.sin(math.rad(thisCard.rotation)) * raisedDistance
+        thisCard.rasedY = thisCard.y - math.cos(math.rad(thisCard.rotation)) * raisedDistance
+        thisCard.isRaised = false
         thisCard.value = theseCards[c]
         thisCard.ID = c
         hand:insert(thisCard)
@@ -533,6 +573,11 @@ local step = function()
             round.turns[#round.turns].player = playerTurn
             round.turns[#round.turns].card = cardPlayed
             -- show the card layed on the pile
+            -- -- if this is the last card on the pile then wait longer
+            -- local pileTime = 100
+            -- if #round.turns == 4 then
+            --     pileTime = 495
+            -- end
             timer.performWithDelay(100, function()
                 if cardPile then
                     display.remove(cardPile)
@@ -542,12 +587,12 @@ local step = function()
                 for i = 1, #round.turns do
                     pileCards[#pileCards + 1] = round.turns[i].card
                 end
-                cardPile = _G.showHand(1, pileCards)
-                backGroup:insert(cardPile)
+                cardPile = _G.showHand(1, "faceUp", pileCards)
                 cardPile.x = display.contentCenterX
                 cardPile.y = display.contentCenterY
             end)
             if #round.turns == 4 then
+                slowForPlayer = true
                 round.wonBy = whoWinsTheDraw(round)
                 local pilePosition = {
                     x = display.contentCenterX - display.actualContentWidth / 2,
@@ -559,17 +604,21 @@ local step = function()
                         y = display.contentCenterY + display.actualContentHeight / 2
                     }
                 end
-                timer.performWithDelay(200, function()
+                timer.performWithDelay(800, function()
                     if cardPile then
                         transition.to(cardPile, {
                             x = pilePosition.x,
                             y = pilePosition.y,
-                            time = 100,
+                            time = 400,
                             onComplete = function()
                                 display.remove(cardPile)
                                 cardPile = nil
                             end
                         })
+                        for c = 1, #cardPile.cards do
+                            _G.flipCard(cardPile.cards[c])
+                            print(cardPile.cards[c].isFlipped)
+                        end
                     end
                 end)
             end
@@ -626,11 +675,18 @@ end
 -- timer.performWithDelay(1, step, -1)
 local time = 0
 local normalTurnTime = 0
+local waitTime = 30
 local update = function()
     time = time + 1
     if not waitingOnPlayer then
         normalTurnTime = normalTurnTime + 1
-        if normalTurnTime % 20 == 0 then
+        waitTime = 30
+        if slowForPlayer then
+            waitTime = 90
+        end
+        if normalTurnTime % waitTime == 0 then
+            normalTurnTime = 0
+            slowForPlayer = false
             step()
         end
     end

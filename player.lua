@@ -14,7 +14,7 @@ rtn.new = function(ID, team)
     obj.handIsSorted = false
     obj.tookNest = false
     -- players in order clockwise from the top left
-    obj.group.x = (math.ceil((obj.ID % 4 + 1) / 2) * 2 - 3) * 100 + display.contentCenterX
+    obj.group.x = (math.ceil((obj.ID % 4 + 1) / 2) * 2 - 3) * 80 + display.contentCenterX
     obj.group.y = (math.ceil(obj.ID / 2) * 2 - 3) * 100 + display.contentCenterY + 20
     obj.reset = function()
         obj.didPass = false
@@ -124,7 +124,7 @@ rtn.new = function(ID, team)
         if obj.myHand then
             display.remove(obj.myHand)
         end
-        obj.myHand = _G.showHand(obj.ID)
+        obj.myHand = _G.showHand(obj.ID, "faceUp")
         obj.myHand.x = 0
         obj.myHand.y = 0
         obj.group:insert(obj.myHand)
