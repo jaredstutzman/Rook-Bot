@@ -266,9 +266,11 @@ _G.showCard = function(color, number, direction)
     card:insert(card.frontSide)
     card:insert(card.backSide)
     if direction == "faceUp" then
+        card.frontSide.isVisible = true
         card.backSide.isVisible = false
         card.isFlipped = false
     elseif direction == "faceDown" then
+        card.frontSide.isVisible = false
         card.backSide.isVisible = true
         card.isFlipped = true
     end
