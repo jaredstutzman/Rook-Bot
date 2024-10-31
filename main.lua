@@ -364,6 +364,51 @@ _G.showBid = function(bid)
     end
     return bidGroup
 end
+-- display what color trump is
+local trumpDisplay = display.newGroup()
+trumpDisplay.back = display.newRect(0, 0, 80, 80)
+trumpDisplay.back:setFillColor(0.2, 0.2, 0.2)
+trumpDisplay.back.strokeWidth = 3
+trumpDisplay.back:setStrokeColor(1, 1, 1)
+trumpDisplay.defaultColor = {0.2, 0.2, 0.2}
+trumpDisplay.redColor = {0.9, 0.2, 0.2}
+trumpDisplay.blackColor = {0, 0, 0}
+trumpDisplay.greenColor = {0.1, 0.8, 0.1}
+trumpDisplay.yellowColor = {0.8, 0.8, 0.1}
+trumpDisplay:insert(trumpDisplay.back)
+trumpDisplay.title = display.newText({
+    text = "TRUMP",
+    color = {0, 0, 0},
+    font = native.systemFontBold,
+    fontSize = 15
+})
+trumpDisplay.title.x = 0
+trumpDisplay.title.y = -30
+trumpDisplay:insert(trumpDisplay.title)
+trumpDisplay.color = display.newText({
+    text = "N/A",
+    color = {0, 0, 0},
+    font = native.systemFontBold,
+    fontSize = 15
+})
+trumpDisplay.color.defaultText = "N/A"
+trumpDisplay.color.x = 0
+trumpDisplay.color.y = 0
+trumpDisplay:insert(trumpDisplay.color)
+trumpDisplay.x = display.contentCenterX - display.actualContentWidth / 2 + trumpDisplay.width / 2
+trumpDisplay.y = display.contentCenterY
+trumpDisplay.show = function(self, newColor)
+    self.color.text = newColor
+end
+_G.showTrump = function()
+    if _G.game.trump then
+        trumpDisplay.color.text = _G.game.trump
+        trumpDisplay.back:setFillColor(unpack(trumpDisplay[_G.game.trump .. "Color"]))
+    else
+        trumpDisplay.back:setFillColor(unpack(trumpDisplay.defaultColor))
+        trumpDisplay.color.text = trumpDisplay.color.defaultText
+    end
+end
 -- shuffle cards
 local shuffleCards = function()
     local shuffledCards = {}
@@ -487,6 +532,8 @@ local step = function()
         setup = false
         isBiding = true
         highestBid = 0
+        _G.game.trump = nil
+        _G.showTrump()
         shuffleCards()
         dealCards()
         for i = 1, 4 do

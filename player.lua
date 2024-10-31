@@ -288,6 +288,7 @@ rtn.new = function(ID, team)
                 end
                 local color = pickerWheel:getValues()[1].value
                 _G.game.trump = color
+                _G.showTrump()
                 obj.sortHand(color)
                 obj.showHand()
                 -- put the nest back

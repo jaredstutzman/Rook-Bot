@@ -638,6 +638,7 @@ rtn.new = function(ID, team)
         obj.showHand()
         local trump = obj.chooseTrump()
         _G.game.trump = trump
+        _G.showTrump()
         obj.sortHand(trump)
         obj.showHand()
         local nestReject = obj.sortOutNest(trump)
