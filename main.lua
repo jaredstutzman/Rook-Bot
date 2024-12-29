@@ -42,7 +42,7 @@ _G.game.bids = bids
 _G.game.thisRound = 0
 _G.game.rounds = {}
 -- game mode is ether "play" or "test"
-_G.game.gameMode = "test"
+_G.gameMode = "test"
 -- _G.game.trump
 -- create deck
 local colors = {"r", "b", "y", "g"}
@@ -57,7 +57,7 @@ deck[#deck + 1] = "bird"
 players[1] = botV2.new(1, 1)
 players[2] = botV2.new(2, 2)
 players[3] = botV1.new(3, 1)
-if _G.game.gameMode == "play" then
+if _G.gameMode == "play" then
     players[4] = playerV1.new(4, 2)
 else
     players[4] = botV1.new(4, 2)
@@ -648,7 +648,7 @@ local step = function()
             end)
             if #round.turns == 4 then
                 -- let the player see the cards at the end of each round
-                slowForPlayer = _G.game.gameMode == "play"
+                slowForPlayer = _G.gameMode == "play"
                 round.wonBy = whoWinsTheDraw(round)
                 local pilePosition = {
                     x = display.contentCenterX - display.actualContentWidth / 2,
