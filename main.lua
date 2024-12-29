@@ -46,6 +46,8 @@ _G.game.rounds = {}
 -- game mode is ether "play" or "test"
 _G.gameMode = "test"
 _G.paused = false
+-- true shows cards
+_G.showVisuals = true or _G.gameMode == "play"
 -- _G.game.trump
 -- create deck
 local colors = {"r", "b", "y", "g"}
@@ -369,8 +371,6 @@ _G.showHand = function(playerID, direction, cards)
         thisCard.rasedX = thisCard.x + math.sin(math.rad(thisCard.rotation)) * raisedDistance
         thisCard.rasedY = thisCard.y - math.cos(math.rad(thisCard.rotation)) * raisedDistance
         thisCard.isRaised = false
-        thisCard.value = theseCards[c]
-        thisCard.ID = c
         hand:insert(thisCard)
         thisCard.raise = function(self)
             self.isRaised = true
@@ -400,6 +400,8 @@ _G.showHand = function(playerID, direction, cards)
             end
             return true
         end)
+        thisCard.value = theseCards[c]
+        thisCard.ID = c
         hand.cards[#hand.cards + 1] = thisCard
     end
     return hand
@@ -685,52 +687,55 @@ local step = function()
             round.turns[#round.turns].player = playerTurn
             round.turns[#round.turns].card = cardPlayed
             -- show the card layed on the pile
-            timer.performWithDelay(100, function()
-                if cardPile then
-                    display.remove(cardPile)
-                    cardPile = nil
-                end
-                local pileCards = {}
-                for i = 1, #round.turns do
-                    pileCards[#pileCards + 1] = round.turns[i].card
-                end
-                cardPile = _G.showHand(1, "faceUp", pileCards)
-                cardGroup:insert(cardPile)
-                cardPile.x = display.contentCenterX
-                cardPile.y = display.contentCenterY
-            end)
+            if _G.showVisuals then
+                timer.performWithDelay(100, function()
+                    if cardPile then
+                        display.remove(cardPile)
+                        cardPile = nil
+                    end
+                    local pileCards = {}
+                    for i = 1, #round.turns do
+                        pileCards[#pileCards + 1] = round.turns[i].card
+                    end
+                    cardPile = _G.showHand(1, "faceUp", pileCards)
+                    cardGroup:insert(cardPile)
+                    cardPile.x = display.contentCenterX
+                    cardPile.y = display.contentCenterY
+                end)
+            end
             if #round.turns == 4 then
                 -- let the player see the cards at the end of each round
                 slowForPlayer = _G.gameMode == "play"
                 round.wonBy = whoWinsTheDraw(round)
-                local pilePosition = {
-                    x = display.contentCenterX - display.actualContentWidth / 2,
-                    y = display.contentCenterY + display.actualContentHeight / 2
-                }
-                if teams[1][round.wonBy] then
-                    pilePosition = {
-                        x = display.contentCenterX + display.actualContentWidth / 2,
+                if _G.showVisuals then
+                    local pilePosition = {
+                        x = display.contentCenterX - display.actualContentWidth / 2,
                         y = display.contentCenterY + display.actualContentHeight / 2
                     }
-                end
-                timer.performWithDelay(800, function()
-                    if cardPile then
-                        -- move the pile
-                        transition.to(cardPile, {
-                            x = pilePosition.x,
-                            y = pilePosition.y,
-                            time = 400,
-                            onComplete = function()
-                                display.remove(cardPile)
-                                cardPile = nil
-                            end
-                        })
-                        for c = 1, #cardPile.cards do
-                            _G.flipCard(cardPile.cards[c])
-                            print(cardPile.cards[c].isFlipped)
-                        end
+                    if teams[1][round.wonBy] then
+                        pilePosition = {
+                            x = display.contentCenterX + display.actualContentWidth / 2,
+                            y = display.contentCenterY + display.actualContentHeight / 2
+                        }
                     end
-                end)
+                    timer.performWithDelay(800, function()
+                        if cardPile then
+                            -- move the pile
+                            transition.to(cardPile, {
+                                x = pilePosition.x,
+                                y = pilePosition.y,
+                                time = 400,
+                                onComplete = function()
+                                    display.remove(cardPile)
+                                    cardPile = nil
+                                end
+                            })
+                            for c = 1, #cardPile.cards do
+                                _G.flipCard(cardPile.cards[c])
+                            end
+                        end
+                    end)
+                end
             end
             deck[#deck + 1] = cardPlayed
             -- all the cards were layed exept the nest
@@ -805,7 +810,6 @@ end
 Runtime:addEventListener("enterFrame", update)
 
 -- TODO: add a manual control for speed, pause, etc.
--- TODO: add a control to turn off visuals
 
 -- TODO: rewrite and clean up
 

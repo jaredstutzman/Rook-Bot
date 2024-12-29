@@ -191,13 +191,15 @@ rtn.new = function(ID, team)
         obj.cards = table.copy(unpack(sortedCards))
     end
     obj.showHand = function()
-        if obj.myHand then
-            display.remove(obj.myHand)
+        if _G.showVisuals then
+            if obj.myHand then
+                display.remove(obj.myHand)
+            end
+            obj.myHand = _G.showHand(obj.ID, "faceDown")
+            obj.myHand.x = 0
+            obj.myHand.y = 0
+            obj.group:insert(1, obj.myHand)
         end
-        obj.myHand = _G.showHand(obj.ID, "faceDown")
-        obj.myHand.x = 0
-        obj.myHand.y = 0
-        obj.group:insert(1, obj.myHand)
     end
     obj.bid = function(bids, highestBid, passedPlayers, submitBid)
         obj.didPass = false
@@ -687,22 +689,24 @@ rtn.new = function(ID, team)
             end
         end
         -- lay card
+        if _G.showVisuals then
+            local cardObj = obj.myHand.cards[cardID]
+            local cardLocationX, cardLocationY = cardObj:localToContent(0, 0)
+            display.currentStage:insert(cardObj)
+            cardObj.x = cardLocationX
+            cardObj.y = cardLocationY
+            transition.to(cardObj, {
+                x = display.contentCenterX,
+                y = display.contentCenterY,
+                time = 100,
+                onComplete = function()
+                    display.remove(cardObj)
+                end
+            })
+            table.remove(obj.myHand.cards, cardID)
+        end
         local card = obj.cards[cardID]
-        local cardObj = obj.myHand.cards[cardID]
-        local cardLocationX, cardLocationY = cardObj:localToContent(0, 0)
-        display.currentStage:insert(cardObj)
-        cardObj.x = cardLocationX
-        cardObj.y = cardLocationY
-        transition.to(cardObj, {
-            x = display.contentCenterX,
-            y = display.contentCenterY,
-            time = 100,
-            onComplete = function()
-                display.remove(cardObj)
-            end
-        })
         table.remove(obj.cards, cardID)
-        table.remove(obj.myHand.cards, cardID)
         obj.showHand()
         submitCard(card)
     end
