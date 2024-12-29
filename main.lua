@@ -465,6 +465,26 @@ backGroup:insert(trumpDisplay)
 trumpDisplay.show = function(self, newColor)
     self.color.text = newColor
 end
+
+local testingData = display.newGroup()
+testingData.back = display.newRect(0, 0, 100, 80)
+testingData.back:setFillColor(0.2, 0.2, 0.2)
+testingData:insert(testingData.back)
+testingData.FPS = display.newText({
+    text = "",
+    color = {0, 0, 0},
+    font = native.systemFontBold,
+    fontSize = 15
+})
+testingData.FPS.baseText = "FPS: "
+testingData.FPS.text = testingData.FPS.baseText
+testingData:insert(testingData.FPS)
+testingData.x = display.contentCenterX - display.actualContentWidth / 2 + testingData.width / 2
+testingData.y = display.contentCenterY - display.actualContentHeight / 2 + testingData.height / 2
+if _G.gameMode ~= "test" then
+    testingData.isVisible = false
+end
+
 _G.showTrump = function()
     if _G.game.trump then
         trumpDisplay.color.text = _G.game.trump
@@ -791,8 +811,24 @@ end
 local time = 0
 local normalTurnTime = 0
 local waitTime = 30
+local lastFrameTime = system.getTimer()
+local averageFPS = 0
+local frameTimes = {}
 local update = function()
     time = time + 1
+    frameTimes[#frameTimes + 1] = system.getTimer() - lastFrameTime
+    lastFrameTime = system.getTimer()
+    if #frameTimes > 10 then
+        table.remove(frameTimes, 1)
+    end
+    local fpsTimer = 0
+    for i = 1, #frameTimes do
+        fpsTimer = fpsTimer + frameTimes[i]
+    end
+    averageFPS = 1000 / (fpsTimer / #frameTimes)
+    if time % 6 == 0 then
+        testingData.FPS.text = testingData.FPS.baseText .. math.floor(averageFPS + 0.5)
+    end
     if not waitingOnPlayer and not _G.paused then
         normalTurnTime = normalTurnTime + 1
         waitTime = 30
