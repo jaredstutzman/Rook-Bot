@@ -197,7 +197,7 @@ rtn.new = function(ID, team)
         obj.myHand = _G.showHand(obj.ID, "faceDown")
         obj.myHand.x = 0
         obj.myHand.y = 0
-        obj.group:insert(obj.myHand)
+        obj.group:insert(1, obj.myHand)
     end
     obj.bid = function(bids, highestBid, passedPlayers, submitBid)
         obj.didPass = false

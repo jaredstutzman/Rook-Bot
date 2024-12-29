@@ -578,10 +578,6 @@ local step = function()
                 players[playerWithNest].takeNest(nest, returnCards)
                 bids.lastBid = highestBid
                 passedPlayers = {}
-                -- don't show the bids
-                for i = 1, #players do
-                    display.remove(players[i].myBidDisplay)
-                end
                 -- put the bid on the board
                 if players[playerWithNest].team == 1 then
                     scoreboard1.bid.text = scoreboard1.bid.baseText .. tostring(highestBid)
@@ -599,6 +595,10 @@ local step = function()
     elseif isLaying then
         local round = _G.game.rounds[#_G.game.rounds]
         if round == nil or #round.turns == 4 then
+            -- stop showing the bids
+            for i = 1, #players do
+                display.remove(players[i].myBidDisplay)
+            end
             -- the first time the player with the nest leads
             playerTurn = playerWithNest
             -- at the end of the round the player that won will start the next round
