@@ -20,6 +20,8 @@ local botV1 = require("botV3")
 local botV2 = require("botV3")
 local playerV1 = require("player")
 local backGroup = display.newGroup()
+local cardGroup = display.newGroup()
+local frontGroup = display.newGroup()
 local setup = true
 local isBiding = false
 local isLaying = false
@@ -63,6 +65,10 @@ if _G.gameMode == "play" then
 else
     players[4] = botV1.new(4, 2)
 end
+cardGroup:insert(players[1].group)
+cardGroup:insert(players[2].group)
+cardGroup:insert(players[3].group)
+cardGroup:insert(players[4].group)
 teams[1] = {
     [1] = players[1],
     [3] = players[3],
@@ -76,7 +82,7 @@ teams[2] = {
 -- pause function
 local pauseGame = function()
     _G.paused = true
-    local pauseIcon = display.newImageRect("pause_button.png", 15, 15)
+    local pauseIcon = display.newImageRect(frontGroup, "pause_button.png", 15, 15)
     pauseIcon.x = display.contentCenterX
     pauseIcon.y = display.contentCenterY
     transition.to(pauseIcon, {
@@ -93,7 +99,7 @@ end
 -- resume function
 local resumeGame = function()
     _G.paused = false
-    local playIcon = display.newImageRect("play_button.png", 15, 15)
+    local playIcon = display.newImageRect(frontGroup, "play_button.png", 15, 15)
     playIcon.x = display.contentCenterX
     playIcon.y = display.contentCenterY
     transition.to(playIcon, {
@@ -453,6 +459,7 @@ trumpDisplay.color.y = 0
 trumpDisplay:insert(trumpDisplay.color)
 trumpDisplay.x = display.contentCenterX - display.actualContentWidth / 2 + trumpDisplay.width / 2
 trumpDisplay.y = display.contentCenterY
+backGroup:insert(trumpDisplay)
 trumpDisplay.show = function(self, newColor)
     self.color.text = newColor
 end
@@ -678,11 +685,6 @@ local step = function()
             round.turns[#round.turns].player = playerTurn
             round.turns[#round.turns].card = cardPlayed
             -- show the card layed on the pile
-            -- -- if this is the last card on the pile then wait longer
-            -- local pileTime = 100
-            -- if #round.turns == 4 then
-            --     pileTime = 495
-            -- end
             timer.performWithDelay(100, function()
                 if cardPile then
                     display.remove(cardPile)
@@ -693,6 +695,7 @@ local step = function()
                     pileCards[#pileCards + 1] = round.turns[i].card
                 end
                 cardPile = _G.showHand(1, "faceUp", pileCards)
+                cardGroup:insert(cardPile)
                 cardPile.x = display.contentCenterX
                 cardPile.y = display.contentCenterY
             end)
@@ -712,6 +715,7 @@ local step = function()
                 end
                 timer.performWithDelay(800, function()
                     if cardPile then
+                        -- move the pile
                         transition.to(cardPile, {
                             x = pilePosition.x,
                             y = pilePosition.y,
@@ -804,8 +808,6 @@ Runtime:addEventListener("enterFrame", update)
 -- TODO: add a control to turn off visuals
 
 -- TODO: rewrite and clean up
-
--- TODO: add all visuals to groups
 
 -- TODO: make the timers tick based so they can be paused
 
