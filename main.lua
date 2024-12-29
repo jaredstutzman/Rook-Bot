@@ -43,6 +43,7 @@ _G.game.thisRound = 0
 _G.game.rounds = {}
 -- game mode is ether "play" or "test"
 _G.gameMode = "test"
+_G.paused = false
 -- _G.game.trump
 -- create deck
 local colors = {"r", "b", "y", "g"}
@@ -72,7 +73,56 @@ teams[2] = {
     [4] = players[4],
     points = 0
 }
-
+-- pause function
+local pauseGame = function()
+    _G.paused = true
+    local pauseIcon = display.newImageRect("pause_button.png", 15, 15)
+    pauseIcon.x = display.contentCenterX
+    pauseIcon.y = display.contentCenterY
+    transition.to(pauseIcon, {
+        alpha = 0.1,
+        xScale = 10,
+        yScale = 10,
+        time = 800,
+        transition = easing.outCubic,
+        onComplete = function()
+            display.remove(pauseIcon)
+        end
+    })
+end
+-- resume function
+local resumeGame = function()
+    _G.paused = false
+    local playIcon = display.newImageRect("play_button.png", 15, 15)
+    playIcon.x = display.contentCenterX
+    playIcon.y = display.contentCenterY
+    transition.to(playIcon, {
+        alpha = 0.1,
+        xScale = 10,
+        yScale = 10,
+        time = 800,
+        transition = easing.outCubic,
+        onComplete = function()
+            display.remove(playIcon)
+        end
+    })
+end
+-- background
+local background = display.newRect(0, 0, display.actualContentWidth, display.actualContentHeight)
+background.x = display.contentCenterX
+background.y = display.contentCenterY
+background:setFillColor(0)
+backGroup:insert(background)
+-- pause the game
+background:addEventListener("touch", function(event)
+    if event.phase == "ended" then
+        if _G.paused then
+            resumeGame()
+        else
+            pauseGame()
+        end
+    end
+end)
 -- setup the scoreboard
 local scoreboard1 = display.newGroup()
 scoreboard1.back = display.newRect(0, 0, 80, 80)
@@ -734,7 +784,7 @@ local normalTurnTime = 0
 local waitTime = 30
 local update = function()
     time = time + 1
-    if not waitingOnPlayer then
+    if not waitingOnPlayer and not _G.paused then
         normalTurnTime = normalTurnTime + 1
         waitTime = 30
         if slowForPlayer then
@@ -754,6 +804,10 @@ Runtime:addEventListener("enterFrame", update)
 -- TODO: add a control to turn off visuals
 
 -- TODO: rewrite and clean up
+
+-- TODO: add all visuals to groups
+
+-- TODO: make the timers tick based so they can be paused
 
 -- local widget = require("widget")
 
