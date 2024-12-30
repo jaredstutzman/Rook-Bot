@@ -84,10 +84,16 @@ teams[2] = {
 -- pause function
 local pauseGame = function()
     _G.paused = true
+    -- pause all timers and transitions
+    timer.pauseAll()
+    transition.pauseAll()
+    timer.resume("UI")
+    transition.resume("UI")
     local pauseIcon = display.newImageRect(frontGroup, "pause_button.png", 15, 15)
     pauseIcon.x = display.contentCenterX
     pauseIcon.y = display.contentCenterY
     transition.to(pauseIcon, {
+        tag = "UI",
         alpha = 0.1,
         xScale = 10,
         yScale = 10,
@@ -101,10 +107,14 @@ end
 -- resume function
 local resumeGame = function()
     _G.paused = false
+    -- resume all timers and transitions
+    timer.resumeAll()
+    transition.resumeAll()
     local playIcon = display.newImageRect(frontGroup, "play_button.png", 15, 15)
     playIcon.x = display.contentCenterX
     playIcon.y = display.contentCenterY
     transition.to(playIcon, {
+        tag = "UI",
         alpha = 0.1,
         xScale = 10,
         yScale = 10,
