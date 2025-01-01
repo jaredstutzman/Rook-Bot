@@ -724,6 +724,39 @@ local step = function()
             round.turns[#round.turns].card = cardPlayed
             -- show the card layed on the pile
             if _G.showVisuals then
+                local pilePosition = {
+                    x = display.contentCenterX - display.actualContentWidth / 2,
+                    y = display.contentCenterY + display.actualContentHeight / 2
+                }
+                if teams[1][round.wonBy] then
+                    pilePosition = {
+                        x = display.contentCenterX + display.actualContentWidth / 2,
+                        y = display.contentCenterY + display.actualContentHeight / 2
+                    }
+                end
+                local shouldRemovePile = false
+                -- check now because it might change at the end of the timer
+                if #round.turns == 4 then
+                    shouldRemovePile = true
+                end
+                local discardPile = function()
+                    if cardPile then
+                        -- move the pile
+                        transition.to(cardPile, {
+                            tag = "card",
+                            x = pilePosition.x,
+                            y = pilePosition.y,
+                            time = 400,
+                            onComplete = function()
+                                display.remove(cardPile)
+                                cardPile = nil
+                            end
+                        })
+                        for c = 1, #cardPile.cards do
+                            _G.flipCard(cardPile.cards[c])
+                        end
+                    end
+                end
                 local showCardOnPile = function()
                     if cardPile then
                         display.remove(cardPile)
@@ -737,6 +770,9 @@ local step = function()
                     cardGroup:insert(cardPile)
                     cardPile.x = display.contentCenterX
                     cardPile.y = display.contentCenterY
+                    if shouldRemovePile then
+                        discardPile()
+                    end
                 end
                 timer.performWithDelay(100, showCardOnPile, "card")
             end
@@ -744,37 +780,6 @@ local step = function()
                 -- let the player see the cards at the end of each round
                 slowForPlayer = _G.gameMode == "play"
                 round.wonBy = whoWinsTheDraw(round)
-                if _G.showVisuals then
-                    local pilePosition = {
-                        x = display.contentCenterX - display.actualContentWidth / 2,
-                        y = display.contentCenterY + display.actualContentHeight / 2
-                    }
-                    if teams[1][round.wonBy] then
-                        pilePosition = {
-                            x = display.contentCenterX + display.actualContentWidth / 2,
-                            y = display.contentCenterY + display.actualContentHeight / 2
-                        }
-                    end
-                    local discardPile = function()
-                        if cardPile then
-                            -- move the pile
-                            transition.to(cardPile, {
-                                tag = "card",
-                                x = pilePosition.x,
-                                y = pilePosition.y,
-                                time = 400,
-                                onComplete = function()
-                                    display.remove(cardPile)
-                                    cardPile = nil
-                                end
-                            })
-                            for c = 1, #cardPile.cards do
-                                _G.flipCard(cardPile.cards[c])
-                            end
-                        end
-                    end
-                    timer.performWithDelay(800, discardPile, "card")
-                end
             end
             deck[#deck + 1] = cardPlayed
             -- all the cards were layed exept the nest
