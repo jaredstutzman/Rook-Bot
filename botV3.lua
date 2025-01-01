@@ -696,6 +696,7 @@ rtn.new = function(ID, team)
             cardObj.x = cardLocationX
             cardObj.y = cardLocationY
             transition.to(cardObj, {
+                tag = "card",
                 x = display.contentCenterX,
                 y = display.contentCenterY,
                 time = 100,

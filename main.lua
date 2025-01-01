@@ -266,22 +266,26 @@ _G.flipCard = function(card)
     if card.isFlipped then
         card.isFlipped = false
         -- show the front of the card when it's flipping over
-        timer.performWithDelay(20, function()
+        local showFront = function()
             card.backSide.isVisible = false
             card.frontSide.isVisible = true
-        end)
+        end
+        timer.performWithDelay(20, showFront,"card")
         transition.to(card, {
+            tag = "card",
             xScale = 1,
             time = 90
         })
     else
         card.isFlipped = true
         -- show the back of the card when it's flipping over
-        timer.performWithDelay(20, function()
+        local showBack = function()
             card.backSide.isVisible = true
             card.frontSide.isVisible = false
-        end)
+        end
+        timer.performWithDelay(20, showBack,"card")
         transition.to(card, {
+            tag = "card",
             xScale = -1,
             time = 160
         })
@@ -388,6 +392,7 @@ _G.showHand = function(playerID, direction, cards)
             self.y = self.homeY
             transition.cancel(self)
             transition.to(self, {
+                tag = "card",
                 time = 100,
                 x = self.rasedX,
                 y = self.rasedY
@@ -399,6 +404,7 @@ _G.showHand = function(playerID, direction, cards)
             self.y = self.rasedY
             transition.cancel(self)
             transition.to(self, {
+                tag = "card",
                 time = 100,
                 x = self.homeX,
                 y = self.homeY
@@ -718,7 +724,7 @@ local step = function()
             round.turns[#round.turns].card = cardPlayed
             -- show the card layed on the pile
             if _G.showVisuals then
-                timer.performWithDelay(100, function()
+                local showCardOnPile = function()
                     if cardPile then
                         display.remove(cardPile)
                         cardPile = nil
@@ -731,7 +737,8 @@ local step = function()
                     cardGroup:insert(cardPile)
                     cardPile.x = display.contentCenterX
                     cardPile.y = display.contentCenterY
-                end)
+                end
+                timer.performWithDelay(100, showCardOnPile, "card")
             end
             if #round.turns == 4 then
                 -- let the player see the cards at the end of each round
@@ -748,10 +755,11 @@ local step = function()
                             y = display.contentCenterY + display.actualContentHeight / 2
                         }
                     end
-                    timer.performWithDelay(800, function()
+                    local discardPile = function()
                         if cardPile then
                             -- move the pile
                             transition.to(cardPile, {
+                                tag = "card",
                                 x = pilePosition.x,
                                 y = pilePosition.y,
                                 time = 400,
@@ -764,7 +772,8 @@ local step = function()
                                 _G.flipCard(cardPile.cards[c])
                             end
                         end
-                    end)
+                    end
+                    timer.performWithDelay(800, discardPile, "card")
                 end
             end
             deck[#deck + 1] = cardPlayed
@@ -817,7 +826,6 @@ local step = function()
     end
 end
 
--- timer.performWithDelay(1, step, -1)
 local time = 0
 local normalTurnTime = 0
 local waitTime = 30
@@ -861,32 +869,6 @@ Runtime:addEventListener("enterFrame", update)
 
 -- TODO: make the timers tick based so they can be paused
 
--- local widget = require("widget")
+-- TODO: add a button to restart the game
 
--- -- Set up the picker wheel columns
--- local columnData = {{
---     align = "left",
---     width = 124,
---     labelPadding = 20,
---     startIndex = 2,
---     labels = {"Hoodie", "Short Sleeve", "Long Sleeve", "Sweatshirt"}
--- }}
-
--- -- Create the widget
--- local pickerWheel = widget.newPickerWheel({
---     x = display.contentCenterX,
---     top = display.contentHeight - 160,
---     columns = columnData,
---     style = "resizable",
---     width = 280,
---     rowHeight = 32,
---     fontSize = 14
--- })
-
--- -- Select the third row in the first column
--- pickerWheel:selectValue(1, 3)
-
--- -- After 4000 milliseconds (4 seconds), select the fourth row in the second column
--- timer.performWithDelay(4000, function()
---     pickerWheel:selectValue(2, 4);
--- end)
+-- TODO: show and animate the nest
