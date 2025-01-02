@@ -695,11 +695,12 @@ rtn.new = function(ID, team)
             display.currentStage:insert(cardObj)
             cardObj.x = cardLocationX
             cardObj.y = cardLocationY
+            _G.flipCard(cardObj)
             transition.to(cardObj, {
                 tag = "card",
                 x = display.contentCenterX,
                 y = display.contentCenterY,
-                time = 100,
+                time = _G.animationTime,
                 onComplete = function()
                     display.remove(cardObj)
                 end

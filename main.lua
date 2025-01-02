@@ -48,6 +48,7 @@ _G.gameMode = "test"
 _G.paused = false
 -- true shows cards
 _G.showVisuals = true or _G.gameMode == "play"
+_G.animationTime = 100
 -- _G.game.trump
 -- create deck
 local colors = {"r", "b", "y", "g"}
@@ -263,6 +264,7 @@ _G.cardMatches = function(card, color)
 end
 -- turn the back side of the card up
 _G.flipCard = function(card)
+    local flipTime = _G.animationTime*0.8
     if card.isFlipped then
         card.isFlipped = false
         -- show the front of the card when it's flipping over
@@ -270,11 +272,11 @@ _G.flipCard = function(card)
             card.backSide.isVisible = false
             card.frontSide.isVisible = true
         end
-        timer.performWithDelay(20, showFront,"card")
+        timer.performWithDelay(flipTime*0.5, showFront,"card")
         transition.to(card, {
             tag = "card",
             xScale = 1,
-            time = 90
+            time = flipTime*1
         })
     else
         card.isFlipped = true
@@ -283,11 +285,11 @@ _G.flipCard = function(card)
             card.backSide.isVisible = true
             card.frontSide.isVisible = false
         end
-        timer.performWithDelay(20, showBack,"card")
+        timer.performWithDelay(flipTime*0.5, showBack,"card")
         transition.to(card, {
             tag = "card",
             xScale = -1,
-            time = 160
+            time = flipTime*1
         })
     end
 end
@@ -295,9 +297,9 @@ end
 _G.showCard = function(color, number, direction)
     local card = display.newGroup()
     card.frontSide = display.newGroup()
-    card.back = display.newRoundedRect(card.frontSide, 0, 0, 70, 112, 7)
+    card.back = display.newRoundedRect(card.frontSide, 0, 0, 56, 89.6, 5)
     card.back:setFillColor(1, 1, 1)
-    card.back.strokeWidth = 3
+    card.back.strokeWidth = card.back.width*0.04
     if color then
         card.name = color .. number
     else
@@ -316,12 +318,12 @@ _G.showCard = function(color, number, direction)
     end
     card.back:setStrokeColor(unpack(rgbColor))
     if (number == "bird") then
-        card.front = display.newImageRect(card.frontSide, "bird.png", 1169 * 0.035, 1185 * 0.035)
-        card.topText = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", 7)
+        card.front = display.newImageRect(card.frontSide, "bird.png", card.back.width*0.73, card.back.width*0.73)
+        card.topText = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", card.back.width*0.1)
         card.topText:setFillColor(unpack(rgbColor))
         card.topText.x = -card.back.width * 0.34
         card.topText.y = -card.back.height * 0.43
-        card.bottomText = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", 7)
+        card.bottomText = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", card.back.width*0.1)
         card.bottomText:setFillColor(unpack(rgbColor))
         card.bottomText.x = card.back.width * 0.34
         card.bottomText.y = card.back.height * 0.43
@@ -329,11 +331,11 @@ _G.showCard = function(color, number, direction)
     else
         card.front = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", 42)
         card.front:setFillColor(unpack(rgbColor))
-        card.topNumber = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", 7)
+        card.topNumber = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", card.back.width*0.1)
         card.topNumber:setFillColor(unpack(rgbColor))
         card.topNumber.x = -card.back.width * 0.38
         card.topNumber.y = -card.back.height * 0.43
-        card.bottomNumber = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", 7)
+        card.bottomNumber = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", card.back.width*0.1)
         card.bottomNumber:setFillColor(unpack(rgbColor))
         card.bottomNumber.x = card.back.width * 0.38
         card.bottomNumber.y = card.back.height * 0.43
@@ -373,8 +375,6 @@ _G.showHand = function(playerID, direction, cards)
         else
             thisCard = _G.showCard(string.sub(theseCards[c], 1, 1), string.sub(theseCards[c], 2, -1), direction)
         end
-        thisCard.xScale = 0.8
-        thisCard.yScale = 0.8
         thisCard.x = (c - #theseCards / 2 - 0.5) * spread
         thisCard.y = math.abs(c - #theseCards / 2 - 0.5) ^ 1.5 * spread * 0.1
         thisCard.homeX = thisCard.x
@@ -393,7 +393,7 @@ _G.showHand = function(playerID, direction, cards)
             transition.cancel(self)
             transition.to(self, {
                 tag = "card",
-                time = 100,
+                time = _G.animationTime*1,
                 x = self.rasedX,
                 y = self.rasedY
             })
@@ -405,7 +405,7 @@ _G.showHand = function(playerID, direction, cards)
             transition.cancel(self)
             transition.to(self, {
                 tag = "card",
-                time = 100,
+                time = _G.animationTime*1,
                 x = self.homeX,
                 y = self.homeY
             })
@@ -746,7 +746,7 @@ local step = function()
                             tag = "card",
                             x = pilePosition.x,
                             y = pilePosition.y,
-                            time = 400,
+                            time = _G.animationTime*4,
                             onComplete = function()
                                 display.remove(cardPile)
                                 cardPile = nil
@@ -774,7 +774,7 @@ local step = function()
                         discardPile()
                     end
                 end
-                timer.performWithDelay(100, showCardOnPile, "card")
+                timer.performWithDelay(_G.animationTime*1, showCardOnPile, "card")
             end
             if #round.turns == 4 then
                 -- let the player see the cards at the end of each round
@@ -833,7 +833,7 @@ end
 
 local time = 0
 local normalTurnTime = 0
-local waitTime = 30
+local waitTime = 0
 local lastFrameTime = system.getTimer()
 local averageFPS = 0
 local frameTimes = {}
