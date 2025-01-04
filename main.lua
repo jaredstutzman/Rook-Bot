@@ -871,6 +871,16 @@ local step = function()
             round.turns[#round.turns + 1] = {}
             round.turns[#round.turns].player = playerTurn
             round.turns[#round.turns].card = cardPlayed
+            if #round.turns == 4 then
+                -- let the player see the cards at the end of each round
+                slowForPlayer = _G.gameMode == "play"
+                round.wonBy = whoWinsTheDraw(round)
+            end
+            deck[#deck + 1] = cardPlayed
+            -- all the cards were layed exept the nest
+            if #deck == 28 then
+                isLaying = false
+            end
             -- show the card layed on the pile
             if _G.showVisuals then
                 local pilePosition = {
@@ -924,16 +934,6 @@ local step = function()
                     end
                 end
                 timer.performWithDelay(_G.animationTime * 1, showCardOnPile, "card")
-            end
-            if #round.turns == 4 then
-                -- let the player see the cards at the end of each round
-                slowForPlayer = _G.gameMode == "play"
-                round.wonBy = whoWinsTheDraw(round)
-            end
-            deck[#deck + 1] = cardPlayed
-            -- all the cards were layed exept the nest
-            if #deck == 28 then
-                isLaying = false
             end
         end
         waitingOnPlayer = true
@@ -1022,5 +1022,3 @@ Runtime:addEventListener("enterFrame", update)
 
 
 -- TODO: rewrite and clean up
-
--- BUG: with draw going to the wrong side
