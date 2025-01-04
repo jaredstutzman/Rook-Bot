@@ -85,11 +85,13 @@ rtn.new = function(ID, team)
     -- players in order clockwise from the top left
     obj.group.x = (math.ceil((obj.ID % 4 + 1) / 2) * 2 - 3) * 80 + display.contentCenterX
     obj.group.y = (math.ceil(obj.ID / 2) * 2 - 3) * 100 + display.contentCenterY + 20
-    obj.reset = function()
+    obj.resetRound = function()
         obj.didPass = false
         obj.handIsSorted = false
         obj.tookNest = false
         obj.nestReject = nil
+        obj.cards = {}
+        obj.showHand()
     end
     obj.sortHand = function(trump)
         local redCards = {

@@ -43,6 +43,7 @@ _G.game = {}
 _G.game.bids = bids
 _G.game.thisRound = 0
 _G.game.rounds = {}
+_G.oldGames = {}
 -- game mode is ether "play" or "test"
 _G.gameMode = "test"
 _G.paused = false
@@ -52,14 +53,18 @@ _G.animationTime = 100
 -- _G.game.trump
 -- create deck
 local colors = {"r", "b", "y", "g"}
-for c = 1, #colors do
-    deck[#deck + 1] = colors[c] .. "5"
-    for n = 9, 14 do
-        deck[#deck + 1] = colors[c] .. n
+local createDeck = function()
+    deck = {}
+    for c = 1, #colors do
+        deck[#deck + 1] = colors[c] .. "5"
+        for n = 9, 14 do
+            deck[#deck + 1] = colors[c] .. n
+        end
+        deck[#deck + 1] = colors[c] .. "1"
     end
-    deck[#deck + 1] = colors[c] .. "1"
+    deck[#deck + 1] = "bird"
 end
-deck[#deck + 1] = "bird"
+createDeck()
 players[1] = botV2.new(1, 1)
 players[2] = botV2.new(2, 2)
 players[3] = botV1.new(3, 1)
@@ -82,6 +87,28 @@ teams[2] = {
     [4] = players[4],
     points = 0
 }
+local sideMenu
+local resumeGame
+local restartGame = function()
+    _G.oldGames[#_G.oldGames + 1] = _G.game
+    _G.game = {}
+    bids = {}
+    _G.game.bids = bids
+    _G.game.thisRound = 0
+    _G.game.rounds = {}
+    setup = true
+    gameIsWon = false
+    highestBid = 0
+    playerWithNest = nil
+    playerStartBid = math.random(4)
+    waitingOnPlayer = false
+    slowForPlayer = false
+    for i = 1, 4 do
+        players[i].resetRound()
+    end
+    createDeck()
+    resumeGame()
+end
 -- pause function
 local pauseGame = function()
     _G.paused = true
@@ -90,6 +117,7 @@ local pauseGame = function()
     transition.pauseAll()
     timer.resume("UI")
     transition.resume("UI")
+    -- display UI
     local pauseIcon = display.newImageRect(frontGroup, "pause_button.png", 15, 15)
     pauseIcon.x = display.contentCenterX
     pauseIcon.y = display.contentCenterY
@@ -104,9 +132,35 @@ local pauseGame = function()
             display.remove(pauseIcon)
         end
     })
+    sideMenu = display.newGroup()
+    frontGroup:insert(sideMenu)
+    sideMenu.back = display.newRect(0, 0, 100, display.actualContentHeight)
+    sideMenu.back:setFillColor(0.7, 0.7, 0.7)
+    sideMenu:insert(sideMenu.back)
+    sideMenu.resumeButton = display.newImageRect(sideMenu, "play_button.png", 50, 50)
+    sideMenu.resumeButton.x = sideMenu.back.width / 2-50
+    sideMenu.resumeButton.y = -sideMenu.back.height / 2+50
+    sideMenu.restartButton = display.newImageRect(sideMenu, "restart_button.png", 50, 50)
+    sideMenu.restartButton.x = sideMenu.back.width / 2-50
+    sideMenu.restartButton.y = -sideMenu.back.height / 2+150
+    -- position side menu
+    sideMenu.x = display.contentCenterX + display.actualContentWidth / 2 - sideMenu.width / 2
+    sideMenu.y = display.contentCenterY
+    sideMenu.resumeButton:addEventListener("touch", function(event)
+        if event.phase == "ended" then
+            resumeGame()
+        end
+        return true
+    end)
+    sideMenu.restartButton:addEventListener("touch", function(event)
+        if event.phase == "ended" then
+            restartGame()
+        end
+        return true
+    end)
 end
 -- resume function
-local resumeGame = function()
+resumeGame = function()
     _G.paused = false
     -- resume all timers and transitions
     timer.resumeAll()
@@ -125,6 +179,7 @@ local resumeGame = function()
             display.remove(playIcon)
         end
     })
+    display.remove(sideMenu)
 end
 -- background
 local background = display.newRect(0, 0, display.actualContentWidth, display.actualContentHeight)
@@ -135,12 +190,25 @@ backGroup:insert(background)
 -- pause the game
 background:addEventListener("touch", function(event)
     if event.phase == "ended" then
-        if _G.paused then
-            resumeGame()
-        else
-            pauseGame()
-        end
+        -- pause by touching the background
+        -- if _G.paused then
+        --     resumeGame()
+        -- else
+        --     pauseGame()
+        -- end
     end
+end)
+-- pause button
+local pauseButton = display.newImageRect(frontGroup, "pause_button.png", 50, 50)
+pauseButton.x = display.contentCenterX+display.actualContentWidth/2-50
+pauseButton.y = display.contentCenterY-display.actualContentHeight/2+50
+frontGroup:insert(pauseButton)
+pauseButton:addEventListener("touch", function(event)
+    if event.phase == "ended" then
+        pauseGame()
+    end
+    print(event.phase)
+    return true
 end)
 -- setup the scoreboard
 local scoreboard1 = display.newGroup()
@@ -624,7 +692,6 @@ local countPoints = function(team, lastRound)
     end
     return subtotal
 end
-local numberOfBids = 0
 local step = function()
     playerTurn = playerTurn % 4 + 1
     local thisPlayer = players[playerTurn]
@@ -635,15 +702,19 @@ local step = function()
         highestBid = 0
         _G.game.trump = nil
         _G.showTrump()
+        -- reset all players also makes sure they have no cards
+        for i = 1, 4 do
+            players[i].resetRound()
+        end
+        -- gives each player 7 cards
         shuffleCards()
         dealCards()
+        -- sort and show each players hand
         for i = 1, 4 do
-            players[i].reset()
             players[i].sortHand()
             players[i].showHand()
         end
     elseif isBiding then
-        numberOfBids = numberOfBids + 1
         if highestBid == 0 then
             playerStartBid = playerStartBid % 4 + 1
             playerTurn = playerStartBid
@@ -868,12 +939,8 @@ end
 
 Runtime:addEventListener("enterFrame", update)
 
--- TODO: add a manual control for speed, pause, etc.
 
 -- TODO: rewrite and clean up
 
--- TODO: make the timers tick based so they can be paused
-
--- TODO: add a button to restart the game
 
 -- TODO: show and animate the nest
