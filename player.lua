@@ -80,7 +80,7 @@ rtn.new = function(ID, team)
         addPrefix(blackCards, "b")
         addPrefix(yellowCards, "y")
         addPrefix(greenCards, "g")
-        local sortedCards = {redCards, blackCards, yellowCards, greenCards}
+        local sortedCards = { redCards, blackCards, yellowCards, greenCards }
         -- remove empty colors
         for i = 4, 1, -1 do
             if not (trump and _G.cardMatches(sortedCards[i].color, trump)) then
@@ -235,14 +235,14 @@ rtn.new = function(ID, team)
             end
         end
 
-        local colorList = {"red", "yellow", "black", "green"}
-        local columnData = {{
+        local colorList = { "red", "yellow", "black", "green" }
+        local columnData = { {
             align = "left",
             width = 40,
             labelPadding = 5,
             startIndex = 4,
             labels = colorList
-        }}
+        } }
 
         -- Create the widget
         local pickerWheel = widget.newPickerWheel({

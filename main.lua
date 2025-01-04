@@ -52,7 +52,7 @@ _G.showVisuals = true or _G.gameMode == "play"
 _G.animationTime = 100
 -- _G.game.trump
 -- create deck
-local colors = {"r", "b", "y", "g"}
+local colors = { "r", "b", "y", "g" }
 local createDeck = function()
     deck = {}
     for c = 1, #colors do
@@ -138,11 +138,11 @@ local pauseGame = function()
     sideMenu.back:setFillColor(0.7, 0.7, 0.7)
     sideMenu:insert(sideMenu.back)
     sideMenu.resumeButton = display.newImageRect(sideMenu, "play_button.png", 50, 50)
-    sideMenu.resumeButton.x = sideMenu.back.width / 2-50
-    sideMenu.resumeButton.y = -sideMenu.back.height / 2+50
+    sideMenu.resumeButton.x = sideMenu.back.width / 2 - 50
+    sideMenu.resumeButton.y = -sideMenu.back.height / 2 + 50
     sideMenu.restartButton = display.newImageRect(sideMenu, "restart_button.png", 50, 50)
-    sideMenu.restartButton.x = sideMenu.back.width / 2-50
-    sideMenu.restartButton.y = -sideMenu.back.height / 2+150
+    sideMenu.restartButton.x = sideMenu.back.width / 2 - 50
+    sideMenu.restartButton.y = -sideMenu.back.height / 2 + 150
     -- position side menu
     sideMenu.x = display.contentCenterX + display.actualContentWidth / 2 - sideMenu.width / 2
     sideMenu.y = display.contentCenterY
@@ -200,8 +200,8 @@ background:addEventListener("touch", function(event)
 end)
 -- pause button
 local pauseButton = display.newImageRect(frontGroup, "pause_button.png", 50, 50)
-pauseButton.x = display.contentCenterX+display.actualContentWidth/2-50
-pauseButton.y = display.contentCenterY-display.actualContentHeight/2+50
+pauseButton.x = display.contentCenterX + display.actualContentWidth / 2 - 50
+pauseButton.y = display.contentCenterY - display.actualContentHeight / 2 + 50
 frontGroup:insert(pauseButton)
 pauseButton:addEventListener("touch", function(event)
     if event.phase == "ended" then
@@ -217,7 +217,7 @@ scoreboard1.back:setFillColor(0.2, 0.2, 0.2)
 scoreboard1:insert(scoreboard1.back)
 scoreboard1.title = display.newText({
     text = "TEAM 1",
-    color = {0, 0, 0},
+    color = { 0, 0, 0 },
     font = native.systemFontBold,
     fontSize = 15
 })
@@ -226,7 +226,7 @@ scoreboard1.title.y = -30
 scoreboard1:insert(scoreboard1.title)
 scoreboard1.score = display.newText({
     text = "0",
-    color = {0, 0, 0},
+    color = { 0, 0, 0 },
     font = native.systemFontBold,
     fontSize = 25
 })
@@ -235,7 +235,7 @@ scoreboard1.score.y = 0
 scoreboard1:insert(scoreboard1.score)
 scoreboard1.bid = display.newText({
     text = "bid: N/A",
-    color = {0, 0, 0},
+    color = { 0, 0, 0 },
     font = native.systemFontBold,
     fontSize = 17
 })
@@ -253,7 +253,7 @@ scoreboard2.back:setFillColor(0.2, 0.2, 0.2)
 scoreboard2:insert(scoreboard2.back)
 scoreboard2.title = display.newText({
     text = "TEAM 2",
-    color = {0, 0, 0},
+    color = { 0, 0, 0 },
     font = native.systemFontBold,
     fontSize = 15
 })
@@ -262,7 +262,7 @@ scoreboard2.title.y = -30
 scoreboard2:insert(scoreboard2.title)
 scoreboard2.score = display.newText({
     text = "0",
-    color = {0, 0, 0},
+    color = { 0, 0, 0 },
     font = native.systemFontBold,
     fontSize = 25
 })
@@ -271,7 +271,7 @@ scoreboard2.score.y = 0
 scoreboard2:insert(scoreboard2.score)
 scoreboard2.bid = display.newText({
     text = "bid: N/A",
-    color = {0, 0, 0},
+    color = { 0, 0, 0 },
     font = native.systemFontBold,
     fontSize = 17
 })
@@ -332,7 +332,7 @@ _G.cardMatches = function(card, color)
 end
 -- turn the back side of the card up
 _G.flipCard = function(card)
-    local flipTime = _G.animationTime*0.8
+    local flipTime = _G.animationTime * 0.8
     if card.isFlipped then
         card.isFlipped = false
         -- show the front of the card when it's flipping over
@@ -340,11 +340,11 @@ _G.flipCard = function(card)
             card.backSide.isVisible = false
             card.frontSide.isVisible = true
         end
-        timer.performWithDelay(flipTime*0.5, showFront,"card")
+        timer.performWithDelay(flipTime * 0.5, showFront, "card")
         transition.to(card, {
             tag = "card",
             xScale = 1,
-            time = flipTime*1
+            time = flipTime * 1
         })
     else
         card.isFlipped = true
@@ -353,11 +353,11 @@ _G.flipCard = function(card)
             card.backSide.isVisible = true
             card.frontSide.isVisible = false
         end
-        timer.performWithDelay(flipTime*0.5, showBack,"card")
+        timer.performWithDelay(flipTime * 0.5, showBack, "card")
         transition.to(card, {
             tag = "card",
             xScale = -1,
-            time = flipTime*1
+            time = flipTime * 1
         })
     end
 end
@@ -367,31 +367,32 @@ _G.showCard = function(color, number, direction)
     card.frontSide = display.newGroup()
     card.back = display.newRoundedRect(card.frontSide, 0, 0, 56, 89.6, 5)
     card.back:setFillColor(1, 1, 1)
-    card.back.strokeWidth = card.back.width*0.04
+    card.back.strokeWidth = card.back.width * 0.04
     if color then
         card.name = color .. number
     else
         card.name = number
     end
     -- color is nil then it's the bird card and it's black
-    local rgbColor = {0.2, 0.6, 0.7}
+    local rgbColor = { 0.2, 0.6, 0.7 }
     if color == "r" then
-        rgbColor = {0.8, 0, 0.1}
+        rgbColor = { 0.8, 0, 0.1 }
     elseif color == "b" then
-        rgbColor = {0.1, 0.1, 0.1}
+        rgbColor = { 0.1, 0.1, 0.1 }
     elseif color == "y" then
-        rgbColor = {0.9, 0.9, 0.2}
+        rgbColor = { 0.9, 0.9, 0.2 }
     elseif color == "g" then
-        rgbColor = {0.1, 0.7, 0.1}
+        rgbColor = { 0.1, 0.7, 0.1 }
     end
     card.back:setStrokeColor(unpack(rgbColor))
     if (number == "bird") then
-        card.front = display.newImageRect(card.frontSide, "bird.png", card.back.width*0.73, card.back.width*0.73)
-        card.topText = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", card.back.width*0.1)
+        card.front = display.newImageRect(card.frontSide, "bird.png", card.back.width * 0.73, card.back.width * 0.73)
+        card.topText = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", card.back.width * 0.1)
         card.topText:setFillColor(unpack(rgbColor))
         card.topText.x = -card.back.width * 0.34
         card.topText.y = -card.back.height * 0.43
-        card.bottomText = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", card.back.width*0.1)
+        card.bottomText = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold",
+            card.back.width * 0.1)
         card.bottomText:setFillColor(unpack(rgbColor))
         card.bottomText.x = card.back.width * 0.34
         card.bottomText.y = card.back.height * 0.43
@@ -399,11 +400,13 @@ _G.showCard = function(color, number, direction)
     else
         card.front = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", 42)
         card.front:setFillColor(unpack(rgbColor))
-        card.topNumber = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", card.back.width*0.1)
+        card.topNumber = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", card.back.width *
+            0.1)
         card.topNumber:setFillColor(unpack(rgbColor))
         card.topNumber.x = -card.back.width * 0.38
         card.topNumber.y = -card.back.height * 0.43
-        card.bottomNumber = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold", card.back.width*0.1)
+        card.bottomNumber = display.newText(card.frontSide, number, 0, 0, "AmericanTypewriter-Semibold",
+            card.back.width * 0.1)
         card.bottomNumber:setFillColor(unpack(rgbColor))
         card.bottomNumber.x = card.back.width * 0.38
         card.bottomNumber.y = card.back.height * 0.43
@@ -421,10 +424,14 @@ _G.showCard = function(color, number, direction)
         card.frontSide.isVisible = false
         card.backSide.isVisible = true
         card.isFlipped = true
+    else
+        -- give a warning if the direction is wrong
+        print("WARNING: card direction must be \"faceUp\" or \"faceDown\"!")
     end
     return card
 end
 -- display a hand of cards
+-- direction is "faceUp" or "faceDown". cards is optional and will override playerID
 _G.showHand = function(playerID, direction, cards)
     local hand = display.newGroup()
     -- how much to spread the cards
@@ -461,7 +468,7 @@ _G.showHand = function(playerID, direction, cards)
             transition.cancel(self)
             transition.to(self, {
                 tag = "card",
-                time = _G.animationTime*1,
+                time = _G.animationTime * 1,
                 x = self.rasedX,
                 y = self.rasedY
             })
@@ -473,7 +480,7 @@ _G.showHand = function(playerID, direction, cards)
             transition.cancel(self)
             transition.to(self, {
                 tag = "card",
-                time = _G.animationTime*1,
+                time = _G.animationTime * 1,
                 x = self.homeX,
                 y = self.homeY
             })
@@ -512,21 +519,43 @@ _G.showBid = function(bid)
     end
     return bidGroup
 end
+-- show the next (face down)
+local nestDisplay = display.newGroup()
+nestDisplay.homeX = display.contentCenterX
+nestDisplay.homeY = display.contentCenterY
+-- direction is "faceUp" or "faceDown". playerWithShowNest is optional and will put the nest on the player
+local showNest = function(direction, playerWithShowNest)
+    if showVisuals then
+        display.remove(nestDisplay)
+        -- just put player 1. it doesn't matter
+        nestDisplay = _G.showHand(1, direction, nest)
+        nestDisplay.homeX = display.contentCenterX
+        nestDisplay.homeY = display.contentCenterY
+        cardGroup:insert(nestDisplay)
+        nestDisplay.x = nestDisplay.homeX
+        nestDisplay.y = nestDisplay.homeY
+        if playerWithShowNest then
+            -- put the nest on the player
+            nestDisplay.x = players[playerWithShowNest].group.x
+            nestDisplay.y = players[playerWithShowNest].group.y
+        end
+    end
+end
 -- display what color trump is
 local trumpDisplay = display.newGroup()
 trumpDisplay.back = display.newRect(0, 0, 80, 80)
 trumpDisplay.back:setFillColor(0.2, 0.2, 0.2)
 trumpDisplay.back.strokeWidth = 3
 trumpDisplay.back:setStrokeColor(1, 1, 1)
-trumpDisplay.defaultColor = {0.2, 0.2, 0.2}
-trumpDisplay.redColor = {0.9, 0.2, 0.2}
-trumpDisplay.blackColor = {0, 0, 0}
-trumpDisplay.greenColor = {0.1, 0.8, 0.1}
-trumpDisplay.yellowColor = {0.8, 0.8, 0.1}
+trumpDisplay.defaultColor = { 0.2, 0.2, 0.2 }
+trumpDisplay.redColor = { 0.9, 0.2, 0.2 }
+trumpDisplay.blackColor = { 0, 0, 0 }
+trumpDisplay.greenColor = { 0.1, 0.8, 0.1 }
+trumpDisplay.yellowColor = { 0.8, 0.8, 0.1 }
 trumpDisplay:insert(trumpDisplay.back)
 trumpDisplay.title = display.newText({
     text = "TRUMP",
-    color = {0, 0, 0},
+    color = { 0, 0, 0 },
     font = native.systemFontBold,
     fontSize = 15
 })
@@ -535,7 +564,7 @@ trumpDisplay.title.y = -30
 trumpDisplay:insert(trumpDisplay.title)
 trumpDisplay.color = display.newText({
     text = "N/A",
-    color = {0, 0, 0},
+    color = { 0, 0, 0 },
     font = native.systemFontBold,
     fontSize = 15
 })
@@ -556,7 +585,7 @@ testingData.back:setFillColor(0.2, 0.2, 0.2)
 testingData:insert(testingData.back)
 testingData.FPS = display.newText({
     text = "",
-    color = {0, 0, 0},
+    color = { 0, 0, 0 },
     font = native.systemFontBold,
     fontSize = 15
 })
@@ -709,6 +738,8 @@ local step = function()
         -- gives each player 7 cards
         shuffleCards()
         dealCards()
+        -- show nest
+        showNest("faceDown")
         -- sort and show each players hand
         for i = 1, 4 do
             players[i].sortHand()
@@ -742,12 +773,51 @@ local step = function()
                 isLaying = true
                 -- put cards back
                 local returnCards = function(_cards)
-                    waitingOnPlayer = false
+                    -- if showing visuals then pause to animation the nest
+                    -- then unpause
+                    local pilePosition = {
+                        x = display.contentCenterX - display.actualContentWidth / 2,
+                        y = display.contentCenterY + display.actualContentHeight / 2
+                    }
+                    if teams[1][playerWithNest] then
+                        pilePosition = {
+                            x = display.contentCenterX + display.actualContentWidth / 2,
+                            y = display.contentCenterY + display.actualContentHeight / 2
+                        }
+                    end
                     nest = _cards
+                    if showVisuals then
+                        showNest("faceDown", playerWithNest)
+                        transition.to(nestDisplay, {
+                            tag = "card",
+                            time = _G.animationTime * 1,
+                            x = pilePosition.x,
+                            y = pilePosition.y,
+                            onComplete = function()
+                                waitingOnPlayer = false
+                                display.remove(nestDisplay)
+                            end
+                        })
+                    else
+                        waitingOnPlayer = false
+                    end
                 end
                 -- give the player the nest then put there unwanted cards back
                 waitingOnPlayer = true
-                players[playerWithNest].takeNest(nest, returnCards)
+                if showVisuals then
+                    transition.to(nestDisplay, {
+                        tag = "card",
+                        time = _G.animationTime * 1,
+                        x = players[playerWithNest].group.x,
+                        y = players[playerWithNest].group.y,
+                        onComplete = function()
+                            display.remove(nestDisplay)
+                            players[playerWithNest].takeNest(nest, returnCards)
+                        end
+                    })
+                else
+                    players[playerWithNest].takeNest(nest, returnCards)
+                end
                 bids.lastBid = highestBid
                 passedPlayers = {}
                 -- put the bid on the board
@@ -817,7 +887,7 @@ local step = function()
                             tag = "card",
                             x = pilePosition.x,
                             y = pilePosition.y,
-                            time = _G.animationTime*4,
+                            time = _G.animationTime * 4,
                             onComplete = function()
                                 display.remove(cardPile)
                                 cardPile = nil
@@ -845,7 +915,7 @@ local step = function()
                         discardPile()
                     end
                 end
-                timer.performWithDelay(_G.animationTime*1, showCardOnPile, "card")
+                timer.performWithDelay(_G.animationTime * 1, showCardOnPile, "card")
             end
             if #round.turns == 4 then
                 -- let the player see the cards at the end of each round

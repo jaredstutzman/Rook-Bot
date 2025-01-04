@@ -149,7 +149,7 @@ rtn.new = function(ID, team)
         addPrefix(blackCards, "b")
         addPrefix(yellowCards, "y")
         addPrefix(greenCards, "g")
-        local sortedCards = {redCards, blackCards, yellowCards, greenCards}
+        local sortedCards = { redCards, blackCards, yellowCards, greenCards }
         -- remove empty colors
         for i = 4, 1, -1 do
             if not (trump and _G.cardMatches(sortedCards[i].color, trump)) then
@@ -338,7 +338,7 @@ rtn.new = function(ID, team)
         else
             -- don't out bid your teammate if your opponents passed
             -- unless you have way better cards
-            -- 
+            --
             -- check if both your opponents passed
             local opponent1ID = (obj.ID + 1) % 4
             local opponent2ID = (obj.ID + 3) % 4
@@ -459,7 +459,7 @@ rtn.new = function(ID, team)
         yellowCards.points = yellowPoints
         greenCards.points = greenPoints
         -- pick the scoring color for trump
-        local scores = {redCards, blackCards, yellowCards, greenCards}
+        local scores = { redCards, blackCards, yellowCards, greenCards }
         table.sort(scores, function(a, b)
             if a.points == b.points then
                 return a.height < b.height
@@ -614,7 +614,7 @@ rtn.new = function(ID, team)
                 end
             end
         end
-        -- simply finish for now 
+        -- simply finish for now
         local priorities = posibleEliminies
         table.sort(priorities, function(a, b)
             return a.priority < b.priority
@@ -640,19 +640,27 @@ rtn.new = function(ID, team)
         obj.tookNest = true
         obj.sortHand()
         obj.showHand()
-        local trump = obj.chooseTrump()
-        _G.game.trump = trump
-        _G.showTrump()
-        obj.sortHand(trump)
-        obj.showHand()
-        local nestReject = obj.sortOutNest(trump)
-        obj.nestReject = nestReject
-        if obj.myHand then
-            display.remove(obj.myHand)
+        -- pause to animation properly
+        local putBackNest = function()
+            local trump = obj.chooseTrump()
+            _G.game.trump = trump
+            _G.showTrump()
+            obj.sortHand(trump)
+            obj.showHand()
+            local nestReject = obj.sortOutNest(trump)
+            obj.nestReject = nestReject
+            if obj.myHand then
+                display.remove(obj.myHand)
+            end
+            obj.sortHand(trump)
+            obj.showHand()
+            putBack(nestReject)
         end
-        obj.sortHand(trump)
-        obj.showHand()
-        putBack(nestReject)
+        if _G.showVisuals then
+            timer.performWithDelay(_G.animationTime * 4, putBackNest, "card")
+        else
+            putBackNest()
+        end
     end
     obj.layCard = function(submitCard)
         -- sort hand with trump last
