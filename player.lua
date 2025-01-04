@@ -22,6 +22,7 @@ rtn.new = function(ID, team)
         obj.tookNest = false
         obj.nestReject = nil
         obj.cards = {}
+        display.remove(obj.myBidDisplay)
         obj.showHand()
     end
     obj.sortHand = function(trump)
