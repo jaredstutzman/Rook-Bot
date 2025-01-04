@@ -100,16 +100,13 @@ local restartGame = function()
     _G.game.rounds = {}
     teams[1].points = 0
     teams[2].points = 0
+    -- the rest of it gets done by setup
     setup = true
     gameIsWon = false
-    highestBid = 0
     playerWithNest = nil
     playerStartBid = math.random(4)
     waitingOnPlayer = false
     slowForPlayer = false
-    for i = 1, 4 do
-        players[i].resetRound()
-    end
     createDeck()
     -- reset the score boards
     scoreboard1.bid.text = scoreboard1.bid.defaultText
@@ -634,6 +631,8 @@ local dealCards = function()
             table.remove(deck, #deck)
         end
     end
+    -- nest maybe wasn't emptied if the game was restarted
+    nest = {}
     for c = 1, 5 do
         nest[#nest + 1] = deck[#deck]
         table.remove(deck, #deck)
@@ -1024,6 +1023,4 @@ Runtime:addEventListener("enterFrame", update)
 
 -- TODO: rewrite and clean up
 
-
--- TODO: bug with to many cards in a hand when restarting the round at the wrong time
--- posibly when the player with the nest still has it in his hand
+-- BUG: with draw going to the wrong side
