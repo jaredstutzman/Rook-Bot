@@ -48,7 +48,7 @@ _G.oldGames = {}
 _G.gameMode = "test"
 _G.paused = false
 -- true shows cards
-_G.showVisuals = false or _G.gameMode == "play"
+_G.showVisuals = true or _G.gameMode == "play"
 _G.animationTime = 100
 -- _G.game.trump
 -- create deck
@@ -87,6 +87,8 @@ teams[2] = {
     [4] = players[4],
     points = 0
 }
+local scoreboard1
+local scoreboard2
 local sideMenu
 local resumeGame
 local restartGame = function()
@@ -96,6 +98,8 @@ local restartGame = function()
     _G.game.bids = bids
     _G.game.thisRound = 0
     _G.game.rounds = {}
+    teams[1].points = 0
+    teams[2].points = 0
     setup = true
     gameIsWon = false
     highestBid = 0
@@ -107,6 +111,11 @@ local restartGame = function()
         players[i].resetRound()
     end
     createDeck()
+    -- reset the score boards
+    scoreboard1.bid.text = scoreboard1.bid.defaultText
+    scoreboard2.bid.text = scoreboard2.bid.defaultText
+    scoreboard1.score.text = tostring(teams[1].points)
+    scoreboard2.score.text = tostring(teams[2].points)
     resumeGame()
 end
 -- pause function
@@ -211,7 +220,7 @@ pauseButton:addEventListener("touch", function(event)
     return true
 end)
 -- setup the scoreboard
-local scoreboard1 = display.newGroup()
+scoreboard1 = display.newGroup()
 scoreboard1.back = display.newRect(0, 0, 80, 80)
 scoreboard1.back:setFillColor(0.2, 0.2, 0.2)
 scoreboard1:insert(scoreboard1.back)
@@ -247,7 +256,7 @@ scoreboard1:insert(scoreboard1.bid)
 scoreboard1.x = display.contentCenterX + display.actualContentWidth / 2 - scoreboard1.back.width / 2
 scoreboard1.y = display.contentCenterY + display.actualContentHeight / 2 - scoreboard1.back.height / 2
 backGroup:insert(scoreboard1)
-local scoreboard2 = display.newGroup()
+scoreboard2 = display.newGroup()
 scoreboard2.back = display.newRect(0, 0, 80, 80)
 scoreboard2.back:setFillColor(0.2, 0.2, 0.2)
 scoreboard2:insert(scoreboard2.back)
@@ -1014,3 +1023,7 @@ Runtime:addEventListener("enterFrame", update)
 
 
 -- TODO: rewrite and clean up
+
+
+-- TODO: bug with to many cards in a hand when restarting the round at the wrong time
+-- posibly when the player with the nest still has it in his hand
