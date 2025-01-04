@@ -354,11 +354,13 @@ rtn.new = function(ID, team)
         if idealBid == "pass" then
             obj.didPass = true
         end
-        display.remove(obj.myBidDisplay)
-        obj.myBidDisplay = _G.showBid(idealBid)
-        obj.myBidDisplay.x = -50
-        obj.myBidDisplay.y = -10
-        obj.group:insert(obj.myBidDisplay)
+        if _G.showVisuals then
+            display.remove(obj.myBidDisplay)
+            obj.myBidDisplay = _G.showBid(idealBid)
+            obj.myBidDisplay.x = -50
+            obj.myBidDisplay.y = -10
+            obj.group:insert(obj.myBidDisplay)
+        end
         submitBid(idealBid)
     end
     obj.chooseTrump = function()

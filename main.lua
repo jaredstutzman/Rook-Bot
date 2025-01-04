@@ -48,7 +48,7 @@ _G.oldGames = {}
 _G.gameMode = "test"
 _G.paused = false
 -- true shows cards
-_G.showVisuals = true or _G.gameMode == "play"
+_G.showVisuals = false or _G.gameMode == "play"
 _G.animationTime = 100
 -- _G.game.trump
 -- create deck
@@ -982,7 +982,7 @@ local update = function()
     time = time + 1
     frameTimes[#frameTimes + 1] = system.getTimer() - lastFrameTime
     lastFrameTime = system.getTimer()
-    if #frameTimes > 10 then
+    if #frameTimes > 100 then
         table.remove(frameTimes, 1)
     end
     local fpsTimer = 0
@@ -996,6 +996,9 @@ local update = function()
     if not waitingOnPlayer and not _G.paused then
         normalTurnTime = normalTurnTime + 1
         waitTime = 30
+        if not _G.showVisuals then
+            waitTime = 1
+        end
         if slowForPlayer then
             waitTime = 120
         end
@@ -1011,6 +1014,3 @@ Runtime:addEventListener("enterFrame", update)
 
 
 -- TODO: rewrite and clean up
-
-
--- TODO: show and animate the nest
