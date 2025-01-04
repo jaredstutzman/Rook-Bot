@@ -45,7 +45,7 @@ _G.game.thisRound = 0
 _G.game.rounds = {}
 _G.oldGames = {}
 -- game mode is ether "play" or "test"
-_G.gameMode = "test"
+_G.gameMode = "play"
 _G.paused = false
 -- true shows cards
 _G.showVisuals = true or _G.gameMode == "play"
@@ -213,7 +213,6 @@ pauseButton:addEventListener("touch", function(event)
     if event.phase == "ended" then
         pauseGame()
     end
-    print(event.phase)
     return true
 end)
 -- setup the scoreboard
@@ -867,13 +866,10 @@ local step = function()
         end
         -- waiting on the player to lay
         local submitCard = function(cardPlayed)
-            waitingOnPlayer = false
             round.turns[#round.turns + 1] = {}
             round.turns[#round.turns].player = playerTurn
             round.turns[#round.turns].card = cardPlayed
             if #round.turns == 4 then
-                -- let the player see the cards at the end of each round
-                slowForPlayer = _G.gameMode == "play"
                 round.wonBy = whoWinsTheDraw(round)
             end
             deck[#deck + 1] = cardPlayed
@@ -909,6 +905,7 @@ local step = function()
                             onComplete = function()
                                 display.remove(cardPile)
                                 cardPile = nil
+                                waitingOnPlayer = false
                             end
                         })
                         for c = 1, #cardPile.cards do
@@ -930,7 +927,13 @@ local step = function()
                     cardPile.x = display.contentCenterX
                     cardPile.y = display.contentCenterY
                     if shouldRemovePile then
-                        discardPile()
+                        if _G.gameMode == "play" then
+                            timer.performWithDelay(_G.animationTime * 10, discardPile, "card")
+                        else
+                            discardPile()
+                        end
+                    else
+                        waitingOnPlayer = false
                     end
                 end
                 timer.performWithDelay(_G.animationTime * 1, showCardOnPile, "card")
