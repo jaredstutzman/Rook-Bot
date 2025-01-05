@@ -405,8 +405,11 @@ _G.cardMatches = function(card, color)
     return false
 end
 -- turn the back side of the card up
-_G.flipCard = function(card)
+_G.flipCard = function(card, flipSpeed)
     local flipTime = _G.animationTime * 0.8
+    if flipSpeed == "slow" then
+        flipTime = _G.animationTime * 2
+    end
     if card.isFlipped then
         card.isFlipped = false
         -- show the front of the card when it's flipping over
@@ -978,7 +981,7 @@ local step = function()
                             end
                         })
                         for c = 1, #cardPile.cards do
-                            _G.flipCard(cardPile.cards[c])
+                            _G.flipCard(cardPile.cards[c], "slow")
                         end
                     end
                 end
