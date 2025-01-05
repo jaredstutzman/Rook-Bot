@@ -96,6 +96,7 @@ local scoreboard2
 local sideMenu
 local resumeGame
 local nestDisplay
+local readyToChangeGamgeMode = false
 local restartGame = function()
     _G.oldGames[#_G.oldGames + 1] = _G.game
     _G.game = {}
@@ -123,6 +124,31 @@ local restartGame = function()
     scoreboard1.score.text = tostring(teams[1].points)
     scoreboard2.score.text = tostring(teams[2].points)
     resumeGame()
+end
+local changeMode = function()
+    -- check what game mode is and change it
+    readyToChangeGamgeMode = false
+    if _G.gameMode == "play" then
+        _G.gameMode = "test"
+        _G.showVisuals = _G.showVisuals or _G.gameMode == "play"
+        display.remove(nestDisplay)
+        for i = 1, 4 do
+            players[i].delete()
+            players[i] = nil
+        end
+        createPlayers()
+        restartGame()
+    else
+        _G.gameMode = "play"
+        _G.showVisuals = _G.showVisuals or _G.gameMode == "play"
+        display.remove(nestDisplay)
+        for i = 1, 4 do
+            players[i].delete()
+            players[i] = nil
+        end
+        createPlayers()
+        restartGame()
+    end
 end
 -- pause function
 local pauseGame = function()
@@ -189,28 +215,13 @@ local pauseGame = function()
     sideMenu.modeButton.y = -sideMenu.back.height / 2 - 50
     sideMenu.modeButton.back:addEventListener("touch", function(event)
         if event.phase == "ended" then
-            if sideMenu.modeButton.text.text == sideMenu.modeButton.text.playText then
-                sideMenu.modeButton.text.text = sideMenu.modeButton.text.testText
-                _G.gameMode = "test"
-                _G.showVisuals = _G.showVisuals or _G.gameMode == "play"
-                display.remove(nestDisplay)
-                for i = 1, 4 do
-                    players[i].delete()
-                    players[i] = nil
-                end
-                createPlayers()
-                restartGame()
-            else
-                sideMenu.modeButton.text.text = sideMenu.modeButton.text.playText
-                _G.gameMode = "play"
-                _G.showVisuals = _G.showVisuals or _G.gameMode == "play"
-                display.remove(nestDisplay)
-                for i = 1, 4 do
-                    players[i].delete()
-                    players[i] = nil
-                end
-                createPlayers()
-                restartGame()
+            -- "test" text changes to "play" and vice versa
+            sideMenu.modeButton.text.text = sideMenu.modeButton.text.text == sideMenu.modeButton.text.playText and "test" or
+                "play"
+            readyToChangeGamgeMode = true
+            -- if button does not match current game mode then change
+            if sideMenu.modeButton.text.text == _G.gameMode then
+                readyToChangeGamgeMode = false
             end
         end
         return true
@@ -236,6 +247,11 @@ local pauseGame = function()
 end
 -- resume function
 resumeGame = function()
+    -- if game mode was change let it change and restart in stead
+    if readyToChangeGamgeMode then
+        changeMode()
+        return
+    end
     _G.paused = false
     -- resume all timers and transitions
     timer.resumeAll()
