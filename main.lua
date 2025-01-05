@@ -216,8 +216,7 @@ local pauseGame = function()
     sideMenu.modeButton.back:addEventListener("touch", function(event)
         if event.phase == "ended" then
             -- "test" text changes to "play" and vice versa
-            sideMenu.modeButton.text.text = sideMenu.modeButton.text.text == sideMenu.modeButton.text.playText and "test" or
-                "play"
+            sideMenu.modeButton.text.text = sideMenu.modeButton.text.text == "play" and "test" or "play"
             readyToChangeGamgeMode = true
             -- if button does not match current game mode then change
             if sideMenu.modeButton.text.text == _G.gameMode then
