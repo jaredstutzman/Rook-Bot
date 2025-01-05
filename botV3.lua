@@ -82,6 +82,7 @@ rtn.new = function(ID, team)
     obj.didPass = false
     obj.handIsSorted = false
     obj.tookNest = false
+    obj.objects = {}
     -- players in order clockwise from the top left
     obj.group.x = (math.ceil((obj.ID % 4 + 1) / 2) * 2 - 3) * 80 + display.contentCenterX
     obj.group.y = (math.ceil(obj.ID / 2) * 2 - 3) * 100 + display.contentCenterY + 20
@@ -91,6 +92,10 @@ rtn.new = function(ID, team)
         obj.tookNest = false
         obj.nestReject = nil
         obj.cards = {}
+        for i = #obj.objects, 1, -1 do
+            display.remove(obj.objects[i])
+            table.remove(obj.objects, i)
+        end
         display.remove(obj.myBidDisplay)
         obj.showHand()
     end
@@ -706,6 +711,7 @@ rtn.new = function(ID, team)
             local cardObj = obj.myHand.cards[cardID]
             local cardLocationX, cardLocationY = cardObj:localToContent(0, 0)
             display.currentStage:insert(cardObj)
+            obj.objects[#obj.objects + 1] = cardObj
             cardObj.x = cardLocationX
             cardObj.y = cardLocationY
             _G.flipCard(cardObj)
@@ -724,6 +730,14 @@ rtn.new = function(ID, team)
         table.remove(obj.cards, cardID)
         obj.showHand()
         submitCard(card)
+    end
+    obj.delete = function()
+        for i = #obj.objects, 1, -1 do
+            display.remove(obj.objects[i])
+            table.remove(obj.objects, i)
+        end
+        display.remove(obj.group)
+        obj.group = nil
     end
     return obj
 end

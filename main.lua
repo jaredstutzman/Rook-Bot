@@ -34,7 +34,6 @@ local slowForPlayer = false
 local cardPile
 local passedPlayers = {}
 local playerTurn = math.random(4)
-local players = {}
 local teams = {}
 local deck = {}
 local nest = {}
@@ -65,32 +64,38 @@ local createDeck = function()
     deck[#deck + 1] = "bird"
 end
 createDeck()
-players[1] = botV2.new(1, 1)
-players[2] = botV2.new(2, 2)
-players[3] = botV1.new(3, 1)
-if _G.gameMode == "play" then
-    players[4] = playerV1.new(4, 2)
-else
-    players[4] = botV1.new(4, 2)
+local players
+local createPlayers = function()
+    players = {}
+    players[1] = botV2.new(1, 1)
+    players[2] = botV2.new(2, 2)
+    players[3] = botV1.new(3, 1)
+    if _G.gameMode == "play" then
+        players[4] = playerV1.new(4, 2)
+    else
+        players[4] = botV1.new(4, 2)
+    end
+    cardGroup:insert(players[1].group)
+    cardGroup:insert(players[2].group)
+    cardGroup:insert(players[3].group)
+    cardGroup:insert(players[4].group)
+    teams[1] = {
+        [1] = players[1],
+        [3] = players[3],
+        points = 0
+    }
+    teams[2] = {
+        [2] = players[2],
+        [4] = players[4],
+        points = 0
+    }
 end
-cardGroup:insert(players[1].group)
-cardGroup:insert(players[2].group)
-cardGroup:insert(players[3].group)
-cardGroup:insert(players[4].group)
-teams[1] = {
-    [1] = players[1],
-    [3] = players[3],
-    points = 0
-}
-teams[2] = {
-    [2] = players[2],
-    [4] = players[4],
-    points = 0
-}
+createPlayers()
 local scoreboard1
 local scoreboard2
 local sideMenu
 local resumeGame
+local nestDisplay
 local restartGame = function()
     _G.oldGames[#_G.oldGames + 1] = _G.game
     _G.game = {}
@@ -100,6 +105,10 @@ local restartGame = function()
     _G.game.rounds = {}
     teams[1].points = 0
     teams[2].points = 0
+    timer.cancel("card")
+    transition.cancel("card")
+    display.remove(cardPile)
+    display.remove(nestDisplay)
     -- the rest of it gets done by setup
     setup = true
     gameIsWon = false
@@ -144,11 +153,71 @@ local pauseGame = function()
     sideMenu.back:setFillColor(0.7, 0.7, 0.7)
     sideMenu:insert(sideMenu.back)
     sideMenu.resumeButton = display.newImageRect(sideMenu, "play_button.png", 50, 50)
-    sideMenu.resumeButton.x = sideMenu.back.width / 2 - 50
     sideMenu.resumeButton.y = -sideMenu.back.height / 2 + 50
     sideMenu.restartButton = display.newImageRect(sideMenu, "restart_button.png", 50, 50)
-    sideMenu.restartButton.x = sideMenu.back.width / 2 - 50
     sideMenu.restartButton.y = -sideMenu.back.height / 2 + 150
+    sideMenu.modeButton = display.newGroup()
+    sideMenu.modeButton.back = display.newRoundedRect(0, 0, 80, 30, 6)
+    sideMenu.modeButton.back:setFillColor(0.2, 0.2, 0.2)
+    sideMenu.modeButton:insert(sideMenu.modeButton.back)
+    sideMenu.modeButton.text = display.newText({
+        text = "Play",
+        x = 0,
+        y = 0,
+        font = native.systemFontBold,
+        fontSize = 19
+    })
+    sideMenu.modeButton.text.playText = "play"
+    sideMenu.modeButton.text.testText = "test"
+    if _G.gameMode == "play" then
+        sideMenu.modeButton.text.text = sideMenu.modeButton.text.playText
+    else
+        sideMenu.modeButton.text.text = sideMenu.modeButton.text.testText
+    end
+    sideMenu.modeButton.text:setFillColor(0.3, 0.8, 0.2)
+    sideMenu.modeButton:insert(sideMenu.modeButton.text)
+    sideMenu.modeButton.description = display.newText({
+        text = "Game mode",
+        x = 0,
+        y = 0,
+        font = native.systemFontBold,
+        fontSize = 12
+    })
+    sideMenu.modeButton.description.y = -25
+    sideMenu.modeButton.description:setFillColor(0.2, 0.2, 0.2)
+    sideMenu.modeButton:insert(sideMenu.modeButton.description)
+    sideMenu.modeButton.y = -sideMenu.back.height / 2 - 50
+    sideMenu.modeButton.back:addEventListener("touch", function(event)
+        if event.phase == "ended" then
+            if sideMenu.modeButton.text.text == sideMenu.modeButton.text.playText then
+                sideMenu.modeButton.text.text = sideMenu.modeButton.text.testText
+                _G.gameMode = "test"
+                _G.showVisuals = _G.showVisuals or _G.gameMode == "play"
+                display.remove(nestDisplay)
+                for i = 1, 4 do
+                    players[i].delete()
+                    players[i] = nil
+                end
+                createPlayers()
+                restartGame()
+            else
+                sideMenu.modeButton.text.text = sideMenu.modeButton.text.playText
+                _G.gameMode = "play"
+                _G.showVisuals = _G.showVisuals or _G.gameMode == "play"
+                display.remove(nestDisplay)
+                for i = 1, 4 do
+                    players[i].delete()
+                    players[i] = nil
+                end
+                createPlayers()
+                restartGame()
+            end
+        end
+        return true
+    end)
+    -- position the mode button
+    sideMenu.modeButton.y = -sideMenu.back.height / 2 + 250
+    sideMenu:insert(sideMenu.modeButton)
     -- position side menu
     sideMenu.x = display.contentCenterX + display.actualContentWidth / 2 - sideMenu.width / 2
     sideMenu.y = display.contentCenterY
@@ -525,7 +594,7 @@ _G.showBid = function(bid)
     return bidGroup
 end
 -- show the next (face down)
-local nestDisplay = display.newGroup()
+nestDisplay = display.newGroup()
 nestDisplay.homeX = display.contentCenterX
 nestDisplay.homeY = display.contentCenterY
 -- direction is "faceUp" or "faceDown". playerWithShowNest is optional and will put the nest on the player
