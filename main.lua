@@ -45,9 +45,10 @@ _G.game.rounds = {}
 _G.oldGames = {}
 -- game mode is ether "play" or "test"
 _G.gameMode = "play"
+_G.overClocking = 1
 _G.paused = false
 -- true shows cards
-_G.showVisuals = true or _G.gameMode == "play"
+_G.showVisuals = false or _G.gameMode == "play"
 _G.animationTime = 100
 -- _G.game.trump
 -- create deck
@@ -1077,33 +1078,35 @@ local lastFrameTime = system.getTimer()
 local averageFPS = 0
 local frameTimes = {}
 local update = function()
-    time = time + 1
-    frameTimes[#frameTimes + 1] = system.getTimer() - lastFrameTime
-    lastFrameTime = system.getTimer()
-    if #frameTimes > 100 then
-        table.remove(frameTimes, 1)
-    end
-    local fpsTimer = 0
-    for i = 1, #frameTimes do
-        fpsTimer = fpsTimer + frameTimes[i]
-    end
-    averageFPS = 1000 / (fpsTimer / #frameTimes)
-    if time % 6 == 0 then
-        testingData.FPS.text = testingData.FPS.baseText .. math.floor(averageFPS + 0.5)
-    end
-    if not waitingOnPlayer and not _G.paused then
-        normalTurnTime = normalTurnTime + 1
-        waitTime = 30
-        if not _G.showVisuals then
-            waitTime = 1
+    for i = 1, _G.overClocking do
+        time = time + 1
+        frameTimes[#frameTimes + 1] = system.getTimer() - lastFrameTime
+        lastFrameTime = system.getTimer()
+        if #frameTimes > 100 then
+            table.remove(frameTimes, 1)
         end
-        if slowForPlayer then
-            waitTime = 120
+        local fpsTimer = 0
+        for i = 1, #frameTimes do
+            fpsTimer = fpsTimer + frameTimes[i]
         end
-        if normalTurnTime % waitTime == 0 then
-            normalTurnTime = 0
-            slowForPlayer = false
-            step()
+        averageFPS = 1000 / (fpsTimer / #frameTimes)
+        if time % 6 == 0 then
+            testingData.FPS.text = testingData.FPS.baseText .. math.floor(averageFPS + 0.5)
+        end
+        if not waitingOnPlayer and not _G.paused then
+            normalTurnTime = normalTurnTime + 1
+            waitTime = 30
+            if not _G.showVisuals then
+                waitTime = 1
+            end
+            if slowForPlayer then
+                waitTime = 120
+            end
+            if normalTurnTime % waitTime == 0 then
+                normalTurnTime = 0
+                slowForPlayer = false
+                step()
+            end
         end
     end
 end
