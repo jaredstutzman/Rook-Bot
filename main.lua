@@ -69,8 +69,8 @@ local players
 local createPlayers = function()
     players = {}
     players[1] = botV2.new(1, 1)
-    players[2] = botV2.new(2, 2)
-    players[3] = botV1.new(3, 1)
+    players[2] = botV1.new(2, 2)
+    players[3] = botV2.new(3, 1)
     if _G.gameMode == "play" then
         players[4] = playerV1.new(4, 2)
     else
@@ -779,39 +779,45 @@ local whoWinsTheDraw = function(round)
     end
     return winingPlayer
 end
+_G.countPointsPerCard = function(card)
+    if string.sub(card, 2) == "5" then
+        return 5
+    elseif string.sub(card, 2) == "10" or string.sub(card, 2) == "14" then
+        return 10
+    elseif string.sub(card, 2) == "1" then
+        return 15
+    elseif card == "bird" then
+        return 20
+    end
+    return 0
+end
+_G.countPointsPerRound = function(roundNumber)
+    local round = _G.game.rounds[roundNumber]
+    local subtotal = 0
+    -- loop through all the cards and count the points
+    for i = 1, #round.turns do
+        subtotal = subtotal + _G.countPointsPerCard(round.turns[i].card)
+    end
+    -- the last round is worth 20 points
+    if roundNumber % 7 == 0 then
+        subtotal = subtotal + 20
+    end
+    return subtotal
+end
 local countPoints = function(team, lastRound)
     local round = _G.game.rounds
     local subtotal = 0
-    local cardValue = function(card)
-        if string.sub(card, 2) == "5" then
-            return 5
-        elseif string.sub(card, 2) == "10" or string.sub(card, 2) == "14" then
-            return 10
-        elseif string.sub(card, 2) == "1" then
-            return 15
-        elseif card == "bird" then
-            return 20
-        end
-        return 0
-    end
     -- loop through the last 7 rounds, a full hand
     for i = lastRound - 6, lastRound do
         -- if that round was won by a player on this team
         if teams[team][round[i].wonBy] then
-            -- loop through all the cards and count the points
-            for I = 1, #round[i].turns do
-                subtotal = subtotal + cardValue(round[i].turns[I].card)
-            end
-            -- the last round is worth 20 points
-            if i == lastRound then
-                subtotal = subtotal + 20
-            end
+            subtotal = subtotal + _G.countPointsPerRound(i)
         end
     end
     -- add the points from the nest if they own the nest
     if teams[team][playerWithNest] then
         for i = 1, #nest do
-            subtotal = subtotal + cardValue(nest[i])
+            subtotal = subtotal + _G.countPointsPerCard(nest[i])
         end
     end
     return subtotal
