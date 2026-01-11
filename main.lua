@@ -8,6 +8,14 @@ if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
     package.loaded["lldebugger"] = assert(loadfile(os.getenv("LOCAL_LUA_DEBUGGER_FILEPATH")))()
     require("lldebugger").start()
 end
+local isPixelArt = false
+if isPixelArt then
+    display.setDefault("magTextureFilter", "nearest")
+    display.setDefault("minTextureFilter", "nearest")
+else
+    display.setDefault("magTextureFilter", "linear")
+    display.setDefault("minTextureFilter", "linear")
+end
 -- debug.setmetatable(true, {
 --     __len = function(value)
 --         return value and 1 or 0
