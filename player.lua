@@ -311,7 +311,7 @@ rtn.new = function(ID, team)
             return true
         end)
     end
-    obj.layCard = function(submitCard)
+    obj.layCard = function(playerWithNest, submitCard)
         -- lay the card
         local layCard = function(cardID)
             local cardObj = obj.myHand.cards[cardID]

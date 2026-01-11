@@ -17,7 +17,7 @@ end
 -- print(#true)
 -- print(#false)
 local botV1 = require("botV3")
-local botV2 = require("botV3")
+local botV2 = require("botV4")
 local playerV1 = require("player")
 local backGroup = display.newGroup()
 local cardGroup = display.newGroup()
@@ -50,6 +50,7 @@ _G.paused = false
 -- true shows cards
 _G.showVisuals = false or _G.gameMode == "play"
 _G.animationTime = 100
+-- trump can be "red", "black", "yellow", "green"
 -- _G.game.trump
 -- create deck
 local colors = { "r", "b", "y", "g" }
@@ -804,18 +805,19 @@ _G.countPointsPerRound = function(roundNumber)
     end
     return subtotal
 end
-local countPoints = function(team, lastRound)
+_G.countPoints = function(teamNumber, lastRound)
     local round = _G.game.rounds
     local subtotal = 0
-    -- loop through the last 7 rounds, a full hand
-    for i = lastRound - 6, lastRound do
+    -- loop through all the draws this round
+    local firstRound = lastRound - lastRound % 7 + 1
+    for i = firstRound, lastRound do
         -- if that round was won by a player on this team
-        if teams[team][round[i].wonBy] then
+        if teams[teamNumber][round[i].wonBy] then
             subtotal = subtotal + _G.countPointsPerRound(i)
         end
     end
     -- add the points from the nest if they own the nest
-    if teams[team][playerWithNest] then
+    if teams[teamNumber][playerWithNest] then
         for i = 1, #nest do
             subtotal = subtotal + _G.countPointsPerCard(nest[i])
         end
@@ -1034,12 +1036,12 @@ local step = function()
             end
         end
         waitingOnPlayer = true
-        players[playerTurn].layCard(submitCard)
+        players[playerTurn].layCard(playerWithNest, submitCard)
     elseif not gameIsWon then
         -- get ready for the next round
         local team = players[playerWithNest].team
         local otherTeam = team - (team * 2 - 3)
-        local points = countPoints(team, _G.game.thisRound)
+        local points = _G.countPoints(team, _G.game.thisRound)
         local wentUp = points >= _G.game.bids.lastBid
         if wentUp then
             teams[team].points = teams[team].points + points
@@ -1121,3 +1123,5 @@ Runtime:addEventListener("enterFrame", update)
 
 
 -- TODO: rewrite and clean up
+
+-- TODO: work on improvments "lessOptimalLay"

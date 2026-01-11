@@ -6,6 +6,30 @@
 -- Your code here
 local minBid = 120
 
+local thisPlayerOutOfTrump = function(playerNumber)
+    local firstRound = math.floor(_G.game.thisRound / 7) * 7 + 1
+    -- loop through all the rounds this hand played
+    for i = firstRound, _G.game.thisRound do
+        -- check if this round just started
+        if #_G.game.rounds[i].turns > 0 then
+            -- check if the trump was led
+            if _G.cardMatches(_G.game.rounds[i].turns[1].card, "trump") then
+                -- check if the opponents played trump
+                for I = 1, #_G.game.rounds[i].turns do
+                    -- this is an oppoennt
+                    if _G.game.rounds[i].turns[I].player == playerNumber then
+                        -- chack if they ran out of trump
+                        if not _G.cardMatches(_G.game.rounds[i].turns[I].card, "trump") then
+                            return false
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return true
+end
+
 local oppHasTrump = function(obj)
     -- is there any round data
     if _G.game.rounds and #_G.game.rounds > 0 then
@@ -40,36 +64,122 @@ local oppHasTrump = function(obj)
         end
         -- the opponents did not play trump when it was led
         -- loop through all the rounds trump was led
-        local opp1hasTrump = true
-        local opp2hasTrump = true
-        for i = firstRound, _G.game.thisRound do
-            -- check if this round just started
-            if #_G.game.rounds[i].turns > 0 then
-                -- check if the trump was led
-                if _G.cardMatches(_G.game.rounds[i].turns[1].card, "trump") then
-                    -- check if the opponents played trump
-                    for I = 1, #_G.game.rounds[i].turns do
-                        -- this is an oppoennt
-                        if not _G.teams[obj.team][_G.game.rounds[i].turns[I].player] then
-                            -- chack if they ran out of trump
-                            if not _G.cardMatches(_G.game.rounds[i].turns[I].card, "trump") then
-                                if _G.game.rounds[i].turns[I].player < 3 then
-                                    opp1hasTrump = false
-                                else
-                                    opp2hasTrump = false
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
+        local opponent1 = (obj.ID + 2) % 4 + 1
+        local opponent2 = (obj.ID) % 4 + 1
+        local opp1hasTrump = thisPlayerOutOfTrump(opponent1)
+        local opp2hasTrump = thisPlayerOutOfTrump(opponent2)
         if not opp1hasTrump and not opp2hasTrump then
             return true
         end
     else
         return false
     end
+end
+
+local getCardNumber = function(card)
+    if card == "bird" then
+        return card
+    end
+    return tonumber(string.sub(card, 2))
+end
+
+local getCardColor = function(card)
+    if card == "bird" then
+        if _G.game.trump then
+            return _G.game.trump
+        end
+        return nil
+    end
+    if string.sub(card, 1, 1) == "r" then
+        return "red"
+    end
+    if string.sub(card, 1, 1) == "b" then
+        return "black"
+    end
+    if string.sub(card, 1, 1) == "y" then
+        return "yellow"
+    end
+    if string.sub(card, 1, 1) == "g" then
+        return "green"
+    end
+end
+
+-- assumes the cards are sorted
+local getHighCards = function(handCards, onlyFromHand)
+    local highCards = {}
+    local cardOrderNoBird = { 1, 14, 13, 12, 11, 10, 9, 5 }
+    local cardOrder = { 1, 14, 13, 12, 11, "bird", 10, 9, 5 }
+    local lowestHigh = { r = 0, b = 0, y = 0, g = 0 }
+    for i = #handCards, 1, -1 do
+        local colorAbbr = string.sub(handCards[i], 1, 1)
+        local thisIsTrump = _G.game.trump and string.sub(_G.game.trump, 1, 1) == colorAbbr
+        -- search for more high cards that were layed
+        if not onlyFromHand then
+            local thisColorLayed = {}
+            local lastRound = #_G.game.rounds
+            local firstRound = lastRound - lastRound % 7 + 1
+            local whichOrder = cardOrder
+            if thisIsTrump then
+                whichOrder = cardOrderNoBird
+            end
+            -- start with the highest card
+            -- if it was layed go to the next
+            for c = 1, #whichOrder do
+                local foundNextHigh = false
+                -- loop through all the cards layed
+                for r = firstRound, lastRound do
+                    for t = 1, #_G.game.rounds[r].turns do
+                        local thisCard = _G.game.rounds[r].turns[t].card
+                        -- is this card the same color
+                        -- and is it the next high
+                        if string.sub(thisCard, 1, 1) == colorAbbr then
+                            local thisCardNumber = tonumber(string.sub(thisCard, 2))
+                            if thisCardNumber == whichOrder[c] then
+                                foundNextHigh = true
+                                -- count the the next high
+                                lowestHigh[colorAbbr] = lowestHigh[colorAbbr] + 1
+                            end
+                        end
+                    end
+                end
+                if not foundNextHigh then
+                    -- next high was not found
+                    break
+                end
+            end
+        end
+        -- find all the high cards in the hand
+        -- to see if this is 1 of the next high
+        local whichOrder = cardOrder
+        if thisIsTrump then
+            whichOrder = cardOrderNoBird
+        end
+        for c = lowestHigh[colorAbbr] + 1, #whichOrder do
+            -- find the next high in the hand
+            local foundNextHigh = false
+            for i2 = 1, #handCards do
+                if handCards[i2] == whichOrder[c] then
+                    lowestHigh[colorAbbr] = lowestHigh[colorAbbr] + 1
+                    foundNextHigh = true
+                    break
+                end
+            end
+            if not foundNextHigh then
+                break
+            end
+        end
+        -- finally see if this is the next known high card
+        local isNextHigh = getCardNumber(handCards[i]) == cardOrderNoBird[lowestHigh[colorAbbr] + 1]
+        if thisIsTrump then
+            isNextHigh = getCardNumber(handCards[i]) == cardOrder[lowestHigh[colorAbbr] + 1]
+        end
+        -- if this card the next card after the other high cards
+        if isNextHigh then
+            lowestHigh[colorAbbr] = lowestHigh[colorAbbr] + 1
+            highCards[#highCards + 1] = handCards[i]
+        end
+    end
+    return highCards
 end
 
 local rtn = {}
@@ -670,23 +780,109 @@ rtn.new = function(ID, team)
             putBackNest()
         end
     end
-    obj.layCard = function(submitCard)
+    obj.layCard = function(playerWithNest, submitCard)
         -- sort hand with trump last
+        -- worst to best
         obj.sortHand(_G.game.trump)
         local cardID = 1
+        local trump = _G.game.trump
+        -- witch team is defending
+        -- team 1 is player 1,3
+        local defendingTeam = (playerWithNest + 1) % 2 + 1
+        -- witch team is attacking
+        -- team 2 is player 2,4
+        local attackingTeam = playerWithNest % 2 + 1
+        -- points won by attacking team
+        local attackingPoints = _G.countPoints(attackingTeam, _G.game.thisRound)
+        -- points needed by attacking team
+        local attackingPointsNeeded = 200 - _G.game.bids.lastBid + 5
+        -- points left for attacking team to win (not counting unfinished rounds)
+        local attackingPointsNeededYet = attackingPointsNeeded - attackingPoints
+        -- how many points are in this round
+        local pointsLayed = _G.countPointsPerRound(_G.game.thisRound)
+        -- the last round is worth 20
+        local myHighCards = getHighCards(obj.cards)
+        if _G.game.thisRound % 7 ~= 0 then
+            pointsLayed = pointsLayed + 20
+        end
         -- play the color thats led
         -- unless you are first
         local turns = _G.game.rounds[_G.game.thisRound].turns
+        -- you are not leading
         if turns and #turns > 0 then
             local cardLed = turns[1].card
+            local hasColorLed = false
             for c = 1, #obj.cards do
                 -- it's the same color
                 if _G.cardMatches(obj.cards[c], cardLed) then
+                    hasColorLed = true
                     cardID = c
                     break
                 end
             end
-        else
+            if not hasColorLed then
+                -- you don't have the color led
+                -- if you have the nest
+                if obj.tookNest then
+                    -- some times trump in, some times get rid of your off color
+                    -- first if you have any off
+                    local hasOff = false
+                    for c = 1, #obj.cards do
+                        if not _G.cardMatches(obj.cards[c], trump) then
+                            hasOff = true
+                            break
+                        end
+                    end
+                    if hasOff then
+                        -- possibly just get rid of off
+                        -- lessOptimalLay because your teammate might be winning this round
+                        if pointsLayed >= attackingPointsNeededYet then
+                            -- just lay the highest card
+                            cardID = #obj.cards
+                        else
+                            -- is not essential so get rid of off
+                            cardID = 1
+                            -- so find the first non high card that is 0 points
+                            -- find all your cards that are high
+                            for c = 1, #obj.cards do
+                                if _G.countPointsPerCard(obj.cards[c]) == 0 then
+                                    if not table.indexOf(myHighCards, obj.cards[c]) then
+                                        cardID = c
+                                    end
+                                end
+                            end
+                        end
+                    else
+                        -- lay trump because you don't have off
+                        -- if they are out of trump lay a low card
+                        -- or if you go last
+                        -- only check the 1 opponent that goes after you
+                        local lastOpp
+                        if #turns < 4 then
+                            lastOpp = obj.ID + 1
+                        end
+                        if not lastOpp or thisPlayerOutOfTrump(lastOpp) then
+                            -- you're fine laying a low card
+                            cardID = 1
+                        else
+                            -- opponent laying after you might have trump
+                            -- if this round has enough points to take us down
+                            -- lessOptimalLay because your teammate might be winning this round
+                            if pointsLayed >= attackingPointsNeededYet then
+                                -- be sure to win this round
+                                cardID = #obj.cards
+                            else
+                                -- is not essential so lay low
+                                -- lessOptimalLay because you may want to win this round
+                                cardID = 1
+                            end
+                        end
+                    end
+                else
+                    -- you don't have the nest
+                end
+            end
+        else -- leading the round
             -- if you have the nest
             if obj.tookNest then
                 cardID = #obj.cards
@@ -704,6 +900,8 @@ rtn.new = function(ID, team)
                         end
                     end
                 end
+            else
+                -- you don't have the nest
             end
         end
         -- lay card

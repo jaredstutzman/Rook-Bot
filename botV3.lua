@@ -670,7 +670,7 @@ rtn.new = function(ID, team)
             putBackNest()
         end
     end
-    obj.layCard = function(submitCard)
+    obj.layCard = function(playerWithNest, submitCard)
         -- sort hand with trump last
         obj.sortHand(_G.game.trump)
         local cardID = 1
