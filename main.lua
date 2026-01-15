@@ -817,7 +817,7 @@ _G.countPoints = function(teamNumber, lastRound)
     local round = _G.game.rounds
     local subtotal = 0
     -- loop through all the draws this round
-    local firstRound = lastRound - lastRound % 7 + 1
+    local firstRound = lastRound - (lastRound - 1) % 7
     for i = firstRound, lastRound do
         -- if that round was won by a player on this team
         if teams[teamNumber][round[i].wonBy] then
