@@ -492,7 +492,7 @@ _G.showCard = function(color, number, direction)
     elseif color == "b" then
         rgbColor = { 0.1, 0.1, 0.1 }
     elseif color == "y" then
-        rgbColor = { 0.9, 0.9, 0.2 }
+        rgbColor = { 0.8, 0.7, 0 }
     elseif color == "g" then
         rgbColor = { 0.1, 0.7, 0.1 }
     end
