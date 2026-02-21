@@ -17,6 +17,76 @@ rtn.new = function(ID, team)
     -- players in order clockwise from the top left
     obj.group.x = (math.ceil((obj.ID % 4 + 1) / 2) * 2 - 3) * 80 + display.contentCenterX
     obj.group.y = (math.ceil(obj.ID / 2) * 2 - 3) * 100 + display.contentCenterY + 20
+    local function onGlobalTouch(event)
+            -- Track swipe direction
+            obj.swipeUp = obj.swipeUp or false
+            obj._lastTouchY = obj._lastTouchY or nil
+            obj._lastTouchX = obj._lastTouchX or nil
+        if obj.submitCardHere then
+            -- handle the lay event for the card held
+            if obj.myHand and obj.myHand.holdingCard then
+                obj.myHand.holdingCard:dispatchEvent({
+                    name = "layingCard",
+                    phase = event.phase,
+                    x = event.x,
+                    y = event.y
+                })
+            end
+            -- if the touch is on the player's hand and there is a card in focus then dispatch a hold event to that card
+            if obj.myHand and obj.myHand.cardInFocus then
+                -- dispatch a hold event
+                -- a hold is a touch above the hand center line
+                local _, handCenterY = obj.myHand:localToContent(0, 0)
+                if event.y < handCenterY-40 or obj.myHand.holdingCard then
+                    -- holding the card
+                    if event.phase == "moved" then
+                        obj.myHand.cardInFocus:dispatchEvent({
+                            name = "holdCard",
+                            phase = event.phase,
+                            x = event.x,
+                            y = event.y
+                        })
+                    end
+                end
+            end
+            -- if the touch ends or is cancelled then dispatch a release event
+            if obj.myHand and obj.myHand.cardInFocus then
+                if event.phase == "ended" or event.phase == "cancelled" then
+                    obj.myHand.cardInFocus:dispatchEvent({
+                        name = "releaseCard",
+                        phase = event.phase,
+                        x = event.x,
+                        y = event.y
+                    })
+                end
+            end
+        end
+        -- Update swipeUp on every movement
+        if event.phase == "moved" then
+            if obj._lastTouchY ~= nil and obj._lastTouchX ~= nil then
+                local dy = event.y - obj._lastTouchY
+                local dx = event.x - obj._lastTouchX
+                -- mostly upward if dy is negative and abs(dy) > abs(dx)
+                if (math.abs(dy) > math.abs(dx) and dy < 0) or (dx == 0 and dy == 0) then
+                    obj.swipeUp = true
+                else
+                    obj.swipeUp = false
+                end
+            end
+            obj._lastTouchY = event.y
+            obj._lastTouchX = event.x
+        elseif event.phase == "began" then
+            obj._lastTouchY = event.y
+            obj._lastTouchX = event.x
+            obj.swipeUp = false
+        elseif event.phase == "ended" or event.phase == "cancelled" then
+            obj._lastTouchY = nil
+            obj._lastTouchX = nil
+            obj.swipeUp = false
+        end
+    end
+
+    _G.screenCover:addEventListener("touch", onGlobalTouch)
     obj.resetRound = function()
         obj.didPass = false
         obj.handIsSorted = false
@@ -137,6 +207,145 @@ rtn.new = function(ID, team)
         obj.myHand.x = 0
         obj.myHand.y = 0
         obj.group:insert(1, obj.myHand)
+        obj.myHand.holdGroup = display.newGroup()
+        _G.frontGroup:insert(obj.myHand.holdGroup)
+        -- touch event to handle several actions
+        -- dragging across the hand will lift cards as you pass over them
+        -- swiping them up will lay them if allowed
+        -- or select cards for nest rejection if taking the nest
+        obj.myHand.cardInFocus = nil
+        obj.myHand.holdingCard = nil
+        for c = 1, #obj.myHand.cards do
+            local thisCard = obj.myHand.cards[c]
+            thisCard:addEventListener("touch", function(event)
+                if obj.submitCardHere and not obj.swipeUp then
+                    -- first lower the previous card in focus
+                    if obj.myHand.holdingCard then
+                        return false
+                    end
+                    if obj.myHand.cardInFocus and obj.myHand.cardInFocus ~= thisCard then
+                        obj.myHand.cardInFocus:lower()
+                        obj.myHand.cardInFocus = nil
+                    end
+                    if event.phase == "moved" or event.phase == "began" then
+                        if obj.myHand.cardInFocus ~= thisCard then
+                            obj.myHand.cardInFocus = thisCard
+                            thisCard:raise()
+                        end
+                        obj.myHand.lastTouchX = event.x
+                        obj.myHand.lastTouchY = event.y
+                    end
+                    return true
+                end
+            end)
+            -- listen for holdCard events
+            thisCard:addEventListener("holdCard", function(event)
+                -- local cardLocationX, cardLocationY = thisCard:localToContent(0, 0)
+                -- thisCard.x = cardLocationX
+                -- thisCard.y = cardLocationY
+                thisCard.holdX, thisCard.holdY  = -20, - 50
+                obj.myHand.holdGroup.x = event.x
+                obj.myHand.holdGroup.y = event.y
+                -- print("cart.x, thisCard.y", thisCard.x, thisCard.y)
+                -- print("event.x, event.y", event.x, event.y)
+                if not thisCard.isHeld then
+                    thisCard.isHeld = true
+                    -- transilate card to holdGroup coordinates
+                    local cardLocationX, cardLocationY = thisCard:localToContent(0, 0)
+                    local groupLocationX, groupLocationY = obj.myHand.holdGroup:localToContent(0, 0)
+
+                    obj.myHand.holdingCard = thisCard
+                    obj.myHand.holdGroup:insert(thisCard)
+
+                    thisCard.x = cardLocationX - groupLocationX
+                    thisCard.y = cardLocationY - groupLocationY
+                    thisCard.xScale = 1
+                    thisCard.yScale = 1
+
+                    -- first cancel any existing transitions on the card
+                    transition.cancel(thisCard)
+
+                    transition.to(thisCard, {
+                        x = thisCard.holdX,
+                        y = thisCard.holdY,
+                        time = _G.animationTime,
+                    })
+                end
+            end)
+            thisCard:addEventListener("releaseCard", function(event)
+                if thisCard.isHeld then
+                    thisCard.isHeld = false
+                    thisCard.isLaying = false
+                    obj.myHand.cardInFocus = nil
+                    obj.myHand.holdingCard = nil
+                    -- return the card to the hand group
+                    local cardLocationX, cardLocationY = thisCard:localToContent(0, 0)
+                    local handLocationX, handLocationY = obj.myHand:localToContent(0, 0)
+
+                    obj.myHand:insert(thisCard.ID,thisCard)
+
+                    thisCard.x = cardLocationX - handLocationX
+                    thisCard.y = cardLocationY - handLocationY
+                    thisCard.xScale = 1
+                    thisCard.yScale = 1
+                    rotation = thisCard.homeRotation
+
+                    -- first cancel any existing transitions on the card
+                    transition.cancel(thisCard)
+
+                    transition.to(thisCard, {
+                        x = thisCard.homeX,
+                        y = thisCard.homeY,
+                        time = _G.animationTime,
+                    })
+                else
+                    -- just push the card back down to the hand
+                    if obj.myHand.cardInFocus == thisCard then
+                        thisCard:lower()
+                        obj.myHand.cardInFocus = nil
+                    end
+                end
+            end)
+            thisCard:addEventListener("layingCard", function(event)
+                -- this event is dispatched when the card is ready to be laid
+                -- the card should grow slightly when close to the center
+                -- then lay the card if the touch ends while close to the center
+                local pilePosition = _G.centerPilePosition
+                local distanceToPile = math.sqrt((event.x - pilePosition.x) ^ 2 + (event.y - pilePosition.y) ^ 2)
+                local layDistance = 50
+                
+                if event.phase == "moved" then
+                    if distanceToPile < layDistance then
+                        if not thisCard.isLaying then
+                            thisCard.isLaying = true
+                            transition.to(thisCard, {
+                                xScale = 1.2,
+                                yScale = 1.2,
+                                time = _G.animationTime
+                            })
+                        end
+                    elseif distanceToPile >= layDistance then
+                        if thisCard.isLaying then
+                            thisCard.isLaying = false
+                            transition.to(thisCard, {
+                                xScale = 1,
+                                yScale = 1,
+                                time = _G.animationTime
+                            })
+                        end
+                    end
+                elseif event.phase == "ended" or event.phase == "cancelled" then
+                    -- dispatch a lay event to the player to handle the game logic of laying the card
+                    thisCard.xScale = 1
+                    thisCard.yScale = 1
+                    if thisCard.isLaying then
+                        if obj.submitCardHere then
+                            obj.submitCardHere(thisCard)
+                        end
+                    end
+                end
+            end)
+        end
     end
     obj.bid = function(bids, highestBid, passedPlayers, submitBid)
         local sartingBid = highestBid + 5
@@ -240,6 +449,7 @@ rtn.new = function(ID, team)
                     nestReject[#nestReject + 1] = _card.value
                 end
             end
+            return true
         end
 
         local colorList = { "red", "yellow", "black", "green" }
@@ -307,6 +517,7 @@ rtn.new = function(ID, team)
                 putBack(nestReject)
                 display.remove(pickerWheel)
                 display.remove(submitButton)
+                obj.myHand.touchEvent = nil
             end
             return true
         end)
@@ -322,8 +533,8 @@ rtn.new = function(ID, team)
             cardObj.y = cardLocationY
             _G.flipCard(cardObj)
             transition.to(cardObj, {
-                x = display.contentCenterX,
-                y = display.contentCenterY,
+                x = _G.centerPilePosition.x,
+                y = _G.centerPilePosition.y,
                 time = _G.animationTime,
                 onComplete = function()
                     display.remove(cardObj)
@@ -332,10 +543,14 @@ rtn.new = function(ID, team)
             table.remove(obj.cards, cardID)
             table.remove(obj.myHand.cards, cardID)
         end
-        -- touch a card to lay it
-        obj.myHand.touchEvent = function(event, _card)
-            if event.phase == "ended" then
-                -- make sure it is the color that was led
+        obj.submitCardHere = function(_card)
+            local executeLay = function()
+                submitCard(_card.value)
+                obj.submitCardHere = nil
+                layCard(_card.ID)
+                obj.showHand()
+            end
+            -- make sure it is the color that was led
                 -- or we don't have that color
                 -- first check if we are laying first
                 if _G.game.rounds[_G.game.thisRound].turns[1] then
@@ -350,20 +565,22 @@ rtn.new = function(ID, team)
                     end
                     if _G.cardMatches(_card.value, cardLed) then
                         -- playing the color that was led
-                        submitCard(_card.value)
-                        layCard(_card.ID)
-                        obj.showHand()
+                        executeLay()
                     elseif not haveTheColor then
                         -- don't have the color the was led
-                        submitCard(_card.value)
-                        layCard(_card.ID)
-                        obj.showHand()
+                        executeLay()
                     end
                 else
                     -- leading the round
-                    submitCard(_card.value)
-                    layCard(_card.ID)
-                    obj.showHand()
+                    executeLay()
+                end
+        end
+        -- touch a card to lay it
+        obj.myHand.touchEvent = function(event, _card)
+            if event.phase == "ended" then
+                if obj.cardInFocus == _card then
+                    _card:lower()
+                    obj.cardInFocus = nil
                 end
             end
         end
@@ -381,3 +598,7 @@ rtn.new = function(ID, team)
 end
 
 return rtn
+
+-- TODO:
+-- on a mostly vertical drag the card should stay raised even if you slide off the edge.
+-- this probably the card you want to lay.

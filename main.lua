@@ -30,6 +30,11 @@ local playerV1 = require("player")
 local backGroup = display.newGroup()
 local cardGroup = display.newGroup()
 local frontGroup = display.newGroup()
+_G.screenCover = display.newRect(frontGroup, display.contentCenterX, display.contentCenterY,
+    display.actualContentWidth, display.actualContentHeight)
+screenCover:setFillColor(0, 0, 0, 0)
+screenCover.isHitTestable = true
+-- screenCover:addEventListener("touch", function() print("screen touched") end)
 local setup = true
 local isBiding = false
 local isLaying = false
@@ -46,6 +51,7 @@ local teams = {}
 local deck = {}
 local nest = {}
 local bids = {}
+_G.frontGroup = frontGroup
 _G.game = {}
 _G.game.bids = bids
 _G.game.thisRound = 0
@@ -58,6 +64,10 @@ _G.paused = false
 -- true shows cards
 _G.showVisuals = false or _G.gameMode == "play"
 _G.animationTime = 100
+_G.centerPilePosition = {
+    x = display.contentCenterX,
+    y = display.contentCenterY
+}
 -- trump can be "red", "black", "yellow", "green"
 -- _G.game.trump
 -- create deck
@@ -544,6 +554,8 @@ _G.showHand = function(playerID, direction, cards)
     if cards then
         theseCards = cards
     end
+    -- index of lifted card
+    hand.cardInFocus = nil
     hand.cards = {}
     for c = 1, #theseCards do
         local thisCard
@@ -589,9 +601,8 @@ _G.showHand = function(playerID, direction, cards)
         end
         thisCard:addEventListener("touch", function(event)
             if hand.touchEvent then
-                hand.touchEvent(event, thisCard)
+                return hand.touchEvent(event, thisCard)
             end
-            return true
         end)
         thisCard.value = theseCards[c]
         thisCard.ID = c
@@ -1131,5 +1142,7 @@ Runtime:addEventListener("enterFrame", update)
 
 
 -- TODO: rewrite and clean up
+    -- UI with a mainPhase variable that can be "setup", "biding", "laying card", "choosing card"
+    -- this is just so controls change; You can not drag a card out when it is in the "biding" phase
 
 -- TODO: work on improvments "lessOptimalLay"
