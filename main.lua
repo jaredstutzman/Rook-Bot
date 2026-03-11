@@ -970,6 +970,7 @@ local step = function()
             -- stop showing the bids
             for i = 1, #players do
                 display.remove(players[i].myBidDisplay)
+                players[i].canDragCards = true
             end
             -- the first time the player with the nest leads
             playerTurn = playerWithNest

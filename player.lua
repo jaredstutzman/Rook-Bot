@@ -31,6 +31,8 @@ rtn.new = function(ID, team)
                     y = event.y
                 })
             end
+        end
+        if obj.canDragCards then
             -- if the touch is on the player's hand and there is a card in focus then dispatch a hold event to that card
             if obj.myHand and obj.myHand.cardInFocus then
                 -- dispatch a hold event
@@ -87,6 +89,7 @@ rtn.new = function(ID, team)
 
     _G.screenCover:addEventListener("touch", onGlobalTouch)
     obj.resetRound = function()
+        obj.canDragCards = false
         obj.didPass = false
         obj.handIsSorted = false
         obj.tookNest = false
@@ -228,7 +231,7 @@ rtn.new = function(ID, team)
                     thisCard = card
                 end
             end
-            if obj.submitCardHere and not obj.swipeUp then
+            if obj.canDragCards and not obj.swipeUp then
                 -- first lower the previous card in focus
                 if obj.myHand.holdingCard then
                     return false
@@ -328,7 +331,7 @@ rtn.new = function(ID, team)
                 
                 if event.phase == "moved" then
                     if distanceToPile < layDistance then
-                        if not thisCard.isLaying then
+                        if not thisCard.isLaying and obj.canDragCards then
                             thisCard.isLaying = true
                             transition.to(thisCard, {
                                 xScale = 1.2,
