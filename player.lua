@@ -18,10 +18,9 @@ rtn.new = function(ID, team)
     obj.group.x = (math.ceil((obj.ID % 4 + 1) / 2) * 2 - 3) * 80 + display.contentCenterX
     obj.group.y = (math.ceil(obj.ID / 2) * 2 - 3) * 100 + display.contentCenterY + 20
     local function onGlobalTouch(event)
-            -- Track swipe direction
-            obj.swipeUp = obj.swipeUp or false
-            obj._lastTouchY = obj._lastTouchY or nil
-            obj._lastTouchX = obj._lastTouchX or nil
+        -- Track swipe direction
+        obj._lastTouchY = obj._lastTouchY or nil
+        obj._lastTouchX = obj._lastTouchX or nil
         if obj.submitCardHere then
             -- handle the lay event for the card held
             if obj.myHand and obj.myHand.holdingCard then
@@ -215,29 +214,42 @@ rtn.new = function(ID, team)
         -- or select cards for nest rejection if taking the nest
         obj.myHand.cardInFocus = nil
         obj.myHand.holdingCard = nil
+        obj.myHand:addEventListener("touch", function(event)
+            -- thisCard is the card closest to the touch.x
+            -- use card homeX to ignore translations
+            local thisCard = nil
+            local closestDistance = math.huge
+            for c = 1, #obj.myHand.cards do
+                local card = obj.myHand.cards[c]
+                local handLocationX, _ = obj.myHand:localToContent(0, 0)
+                local distance = math.abs(event.x - (handLocationX+card.homeX))
+                if distance < closestDistance then
+                    closestDistance = distance
+                    thisCard = card
+                end
+            end
+            if obj.submitCardHere and not obj.swipeUp then
+                -- first lower the previous card in focus
+                if obj.myHand.holdingCard then
+                    return false
+                end
+                if obj.myHand.cardInFocus and obj.myHand.cardInFocus ~= thisCard then
+                    obj.myHand.cardInFocus:lower()
+                    obj.myHand.cardInFocus = nil
+                end
+                if event.phase == "moved" or event.phase == "began" then
+                    if obj.myHand.cardInFocus ~= thisCard then
+                        obj.myHand.cardInFocus = thisCard
+                        thisCard:raise(true)
+                    end
+                    obj.myHand.lastTouchX = event.x
+                    obj.myHand.lastTouchY = event.y
+                end
+                return true
+            end
+        end)
         for c = 1, #obj.myHand.cards do
             local thisCard = obj.myHand.cards[c]
-            thisCard:addEventListener("touch", function(event)
-                if obj.submitCardHere and not obj.swipeUp then
-                    -- first lower the previous card in focus
-                    if obj.myHand.holdingCard then
-                        return false
-                    end
-                    if obj.myHand.cardInFocus and obj.myHand.cardInFocus ~= thisCard then
-                        obj.myHand.cardInFocus:lower()
-                        obj.myHand.cardInFocus = nil
-                    end
-                    if event.phase == "moved" or event.phase == "began" then
-                        if obj.myHand.cardInFocus ~= thisCard then
-                            obj.myHand.cardInFocus = thisCard
-                            thisCard:raise()
-                        end
-                        obj.myHand.lastTouchX = event.x
-                        obj.myHand.lastTouchY = event.y
-                    end
-                    return true
-                end
-            end)
             -- listen for holdCard events
             thisCard:addEventListener("holdCard", function(event)
                 -- local cardLocationX, cardLocationY = thisCard:localToContent(0, 0)
@@ -311,8 +323,8 @@ rtn.new = function(ID, team)
                 -- the card should grow slightly when close to the center
                 -- then lay the card if the touch ends while close to the center
                 local pilePosition = _G.centerPilePosition
-                local distanceToPile = math.sqrt((event.x - pilePosition.x) ^ 2 + (event.y - pilePosition.y) ^ 2)
-                local layDistance = 50
+                local distanceToPile = math.sqrt((event.x - pilePosition.x) ^ 2 + (event.y - pilePosition.y-40) ^ 2)
+                local layDistance = 60
                 
                 if event.phase == "moved" then
                     if distanceToPile < layDistance then
@@ -600,5 +612,4 @@ end
 return rtn
 
 -- TODO:
--- on a mostly vertical drag the card should stay raised even if you slide off the edge.
--- this probably the card you want to lay.
+-- let the player drag out the card before their turn.

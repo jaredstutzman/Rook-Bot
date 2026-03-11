@@ -575,11 +575,15 @@ _G.showHand = function(playerID, direction, cards)
         thisCard.rasedY = thisCard.y - math.cos(math.rad(thisCard.rotation)) * raisedDistance
         thisCard.isRaised = false
         hand:insert(thisCard)
-        thisCard.raise = function(self)
+        thisCard.raise = function(self, tofront)
             self.isRaised = true
             self.x = self.homeX
             self.y = self.homeY
             transition.cancel(self)
+            -- Move card to top of hand group
+            if tofront and self.parent then
+                self.parent:insert(self)
+            end
             transition.to(self, {
                 tag = "card",
                 time = _G.animationTime * 1,
@@ -592,6 +596,10 @@ _G.showHand = function(playerID, direction, cards)
             self.x = self.rasedX
             self.y = self.rasedY
             transition.cancel(self)
+            -- Move card back to its original position in hand group
+            if self.parent then
+                self.parent:insert(self.ID, self)
+            end
             transition.to(self, {
                 tag = "card",
                 time = _G.animationTime * 1,
