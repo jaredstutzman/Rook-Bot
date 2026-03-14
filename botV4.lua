@@ -64,7 +64,7 @@ local oppHasTrump = function(obj)
         end
         -- the opponents did not play trump when it was led
         -- loop through all the rounds trump was led
-        local opponent1, opponent2 = _G.findAPlayer({opponentsOf = obj.ID})
+        local opponent1, opponent2 = _G.findAPlayer({opponentsOf = obj})
         local opp1hasTrump = thisPlayerOutOfTrump(opponent1.ID)
         local opp2hasTrump = thisPlayerOutOfTrump(opponent2.ID)
         if not opp1hasTrump and not opp2hasTrump then
@@ -456,7 +456,7 @@ rtn.new = function(ID, team)
             -- unless you have way better cards
             --
             -- check if both your opponents passed
-            local opponent1, opponent2 = _G.findAPlayer({opponentsOf = obj.ID})
+            local opponent1, opponent2 = _G.findAPlayer({opponentsOf = obj})
             if opponent1.didPass and opponent2.didPass then
                 -- check if you can afford to out bid
                 if largestSafeBid >= highestBid + 15 then

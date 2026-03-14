@@ -858,7 +858,7 @@ _G.findAPlayer = function(description)
     if description.playerWithNest then
         return players[playerWithNest]
     end
-    if description.humansPlayer then
+    if description.humanPlayers then
         local humanPlayers = {}
         for i = 1, 4 do
             if players[i].isHuman then
@@ -870,7 +870,7 @@ _G.findAPlayer = function(description)
     if description.opponentsOf then
         local opponents = {}
         for i = 1, 4 do
-            if players[i].team ~= players[description.opponentsOf].team then
+            if players[i].team ~= players[description.opponentsOf.ID].team then
                 opponents[#opponents + 1] = players[i]
             end
         end
@@ -879,7 +879,7 @@ _G.findAPlayer = function(description)
     if description.teammatesOf then
         local teammates = {}
         for i = 1, 4 do
-            if players[i].team == players[description.teammatesOf].team then
+            if players[i].team == players[description.teammatesOf.ID].team then
                 teammates[#teammates + 1] = players[i]
             end
         end

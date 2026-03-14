@@ -347,7 +347,7 @@ rtn.new = function(ID, team)
             -- unless you have way better cards
             --
             -- check if both your opponents passed
-            local opponent1, opponent2 = _G.findAPlayer({opponentsOf = obj.ID})
+            local opponent1, opponent2 = _G.findAPlayer({opponentsOf = obj})
             if passedPlayers[(obj.ID + 1) % 4] and passedPlayers[(obj.ID + 3) % 4] then
                 -- check if you can afford to out bid
                 if largestSafeBid >= highestBid + 15 then
