@@ -13,6 +13,7 @@ rtn.new = function(ID, team)
     obj.didPass = false
     obj.handIsSorted = false
     obj.tookNest = false
+    obj.isHuman = true
     obj.objects = {}
     -- players in order clockwise from the top left
     obj.group.x = (math.ceil((obj.ID % 4 + 1) / 2) * 2 - 3) * 80 + display.contentCenterX
@@ -434,6 +435,9 @@ rtn.new = function(ID, team)
         obj.objects[#obj.objects + 1] = submitButton
 
         submitButton:addEventListener("tap", function()
+            if myBid == "pass" then
+                obj.didPass = true
+            end
             submitBid(myBid)
             display.remove(newStepper)
             display.remove(submitButton)
@@ -614,5 +618,3 @@ end
 
 return rtn
 
--- TODO:
--- let the player drag out the card before their turn.

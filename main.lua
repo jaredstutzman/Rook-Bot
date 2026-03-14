@@ -851,6 +851,50 @@ _G.countPoints = function(teamNumber, lastRound)
     end
     return subtotal
 end
+_G.findAPlayer = function(description)
+    if description.playersTurnPlus then
+        return players[(playerTurn + description.playersTurnPlus - 1) % 4 + 1]
+    end
+    if description.playerWithNest then
+        return players[playerWithNest]
+    end
+    if description.humansPlayer then
+        local humanPlayers = {}
+        for i = 1, 4 do
+            if players[i].isHuman then
+                humanPlayers[#humanPlayers + 1] = players[i]
+            end
+        end
+        return unpack(humanPlayers)
+    end
+    if description.opponentsOf then
+        local opponents = {}
+        for i = 1, 4 do
+            if players[i].team ~= players[description.opponentsOf].team then
+                opponents[#opponents + 1] = players[i]
+            end
+        end
+        return unpack(opponents)
+    end
+    if description.teammatesOf then
+        local teammates = {}
+        for i = 1, 4 do
+            if players[i].team == players[description.teammatesOf].team then
+                teammates[#teammates + 1] = players[i]
+            end
+        end
+        return unpack(teammates)
+    end
+    if description.opponentTeamOfPlayer then
+        -- returns a team.
+        local thisTeam = description.opponentTeamOfPlayer.team
+        local otherTeam = thisTeam % 2 + 1
+        return teams[otherTeam]
+    end
+    if description.teamOfPlayer then
+        return description.teamOfPlayer.team
+    end
+end
 local step = function()
     playerTurn = playerTurn % 4 + 1
     local thisPlayer = players[playerTurn]
@@ -1064,7 +1108,7 @@ local step = function()
             end
         end
         waitingOnPlayer = true
-        players[playerTurn].layCard(playerWithNest, submitCard)
+        players[playerTurn].layCard(players[playerWithNest], submitCard)
     elseif not gameIsWon then
         -- get ready for the next round
         local team = players[playerWithNest].team
@@ -1137,6 +1181,11 @@ local update = function()
             end
             if slowForPlayer then
                 waitTime = 120
+            end
+            -- if it is the players turn alow them to go emmediately.
+            -- this is for laying, not for biding.
+            if _G.findAPlayer({playersTurnPlus = 1}).isHuman and isLaying then
+                waitTime = 1
             end
             if normalTurnTime % waitTime == 0 then
                 normalTurnTime = 0

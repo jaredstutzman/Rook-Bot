@@ -82,6 +82,7 @@ rtn.new = function(ID, team)
     obj.didPass = false
     obj.handIsSorted = false
     obj.tookNest = false
+    obj.isHuman = false
     obj.objects = {}
     -- players in order clockwise from the top left
     obj.group.x = (math.ceil((obj.ID % 4 + 1) / 2) * 2 - 3) * 80 + display.contentCenterX
@@ -346,8 +347,7 @@ rtn.new = function(ID, team)
             -- unless you have way better cards
             --
             -- check if both your opponents passed
-            local opponent1ID = (obj.ID + 1) % 4
-            local opponent2ID = (obj.ID + 3) % 4
+            local opponent1, opponent2 = _G.findAPlayer({opponentsOf = obj.ID})
             if passedPlayers[(obj.ID + 1) % 4] and passedPlayers[(obj.ID + 3) % 4] then
                 -- check if you can afford to out bid
                 if largestSafeBid >= highestBid + 15 then

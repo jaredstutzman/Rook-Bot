@@ -64,10 +64,9 @@ local oppHasTrump = function(obj)
         end
         -- the opponents did not play trump when it was led
         -- loop through all the rounds trump was led
-        local opponent1 = (obj.ID + 2) % 4 + 1
-        local opponent2 = (obj.ID) % 4 + 1
-        local opp1hasTrump = thisPlayerOutOfTrump(opponent1)
-        local opp2hasTrump = thisPlayerOutOfTrump(opponent2)
+        local opponent1, opponent2 = _G.findAPlayer({opponentsOf = obj.ID})
+        local opp1hasTrump = thisPlayerOutOfTrump(opponent1.ID)
+        local opp2hasTrump = thisPlayerOutOfTrump(opponent2.ID)
         if not opp1hasTrump and not opp2hasTrump then
             return true
         end
@@ -192,6 +191,7 @@ rtn.new = function(ID, team)
     obj.didPass = false
     obj.handIsSorted = false
     obj.tookNest = false
+    obj.isHuman = false
     obj.objects = {}
     -- players in order clockwise from the top left
     obj.group.x = (math.ceil((obj.ID % 4 + 1) / 2) * 2 - 3) * 80 + display.contentCenterX
@@ -456,9 +456,8 @@ rtn.new = function(ID, team)
             -- unless you have way better cards
             --
             -- check if both your opponents passed
-            local opponent1ID = (obj.ID + 1) % 4
-            local opponent2ID = (obj.ID + 3) % 4
-            if passedPlayers[(obj.ID + 1) % 4] and passedPlayers[(obj.ID + 3) % 4] then
+            local opponent1, opponent2 = _G.findAPlayer({opponentsOf = obj.ID})
+            if opponent1.didPass and opponent2.didPass then
                 -- check if you can afford to out bid
                 if largestSafeBid >= highestBid + 15 then
                     idealBid = highestBid + 5
@@ -788,10 +787,10 @@ rtn.new = function(ID, team)
         local trump = _G.game.trump
         -- witch team is defending
         -- team 1 is player 1,3
-        local defendingTeam = (playerWithNest + 1) % 2 + 1
+        local defendingTeam = playerWithNest.team
         -- witch team is attacking
         -- team 2 is player 2,4
-        local attackingTeam = playerWithNest % 2 + 1
+        local attackingTeam = _G.findAPlayer({opponentsOf = playerWithNest}).team
         -- points won by attacking team
         local attackingPoints = _G.countPoints(attackingTeam, _G.game.thisRound)
         -- points needed by attacking team
