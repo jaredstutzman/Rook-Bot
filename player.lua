@@ -68,12 +68,20 @@ rtn.new = function(ID, team)
             if obj._lastTouchY ~= nil and obj._lastTouchX ~= nil then
                 local dy = event.y - obj._lastTouchY
                 local dx = event.x - obj._lastTouchX
-                -- mostly upward if dy is negative and abs(dy) > abs(dx)
-                if (math.abs(dy) > math.abs(dx) and dy < 0) or (dx == 0 and dy == 0) then
+                -- Store previous dy/dx
+                obj._prevDy = obj._prevDy or dy
+                obj._prevDx = obj._prevDx or dx
+                -- Average last two vectors
+                local avgDy = (dy + obj._prevDy) / 2
+                local avgDx = (dx + obj._prevDx) / 2
+                local swipeUpCondition = (math.abs(avgDy) > math.abs(avgDx) and avgDy < 0)
+                if swipeUpCondition then
                     obj.swipeUp = true
                 else
                     obj.swipeUp = false
                 end
+                obj._prevDy = dy
+                obj._prevDx = dx
             end
             obj._lastTouchY = event.y
             obj._lastTouchX = event.x
@@ -89,6 +97,22 @@ rtn.new = function(ID, team)
     end
 
     _G.screenCover:addEventListener("touch", onGlobalTouch)
+    obj._hasThisColor = function(color)
+        for c = 1, #obj.cards do
+            if _G.cardMatches(obj.cards[c], color) then
+                return true
+            end
+        end
+        return false
+    end
+    obj.willRenig = function(layingCard, colorLed)
+        -- check if the player has the color that was led
+        -- if the player has the color that was led and is not playing it then they are reneging
+        if obj._hasThisColor(colorLed) and not _G.cardMatches(layingCard, colorLed) then
+            return true
+        end
+        return false
+    end
     obj.resetRound = function()
         obj.canDragCards = false
         obj.didPass = false
@@ -218,6 +242,9 @@ rtn.new = function(ID, team)
         -- or select cards for nest rejection if taking the nest
         obj.myHand.cardInFocus = nil
         obj.myHand.holdingCard = nil
+        obj.probableCardChoice = nil
+        obj._consecutiveCardEvents = 0
+        obj._lastCardEvent = nil
         obj.myHand:addEventListener("touch", function(event)
             -- thisCard is the card closest to the touch.x
             -- use card homeX to ignore translations
@@ -241,13 +268,27 @@ rtn.new = function(ID, team)
                     obj.myHand.cardInFocus:lower()
                     obj.myHand.cardInFocus = nil
                 end
-                if event.phase == "moved" or event.phase == "began" then
+                -- Track consecutive events on the same card
+                if obj._lastCardEvent == thisCard then
+                    obj._consecutiveCardEvents = obj._consecutiveCardEvents + 1
+                else
+                    obj._consecutiveCardEvents = 1
+                    obj._lastCardEvent = thisCard
+                end
+                if obj._consecutiveCardEvents == 3 then
+                    -- Raise the card if 3 consecutive events
                     if obj.myHand.cardInFocus ~= thisCard then
                         obj.myHand.cardInFocus = thisCard
                         thisCard:raise(true)
                     end
+                end
+                if event.phase == "began" or event.phase == "moved" then
                     obj.myHand.lastTouchX = event.x
                     obj.myHand.lastTouchY = event.y
+                elseif event.phase == "ended" or event.phase == "cancelled" then
+                    obj.probableCardChoice = nil
+                    obj._consecutiveCardEvents = 0
+                    obj._lastCardEvent = nil
                 end
                 return true
             end
@@ -262,8 +303,6 @@ rtn.new = function(ID, team)
                 thisCard.holdX, thisCard.holdY  = -20, - 50
                 obj.myHand.holdGroup.x = event.x
                 obj.myHand.holdGroup.y = event.y
-                -- print("cart.x, thisCard.y", thisCard.x, thisCard.y)
-                -- print("event.x, event.y", event.x, event.y)
                 if not thisCard.isHeld then
                     thisCard.isHeld = true
                     -- transilate card to holdGroup coordinates
@@ -327,16 +366,17 @@ rtn.new = function(ID, team)
                 -- the card should grow slightly when close to the center
                 -- then lay the card if the touch ends while close to the center
                 local pilePosition = _G.centerPilePosition
-                local distanceToPile = math.sqrt((event.x - pilePosition.x) ^ 2 + (event.y - pilePosition.y-40) ^ 2)
-                local layDistance = 60
+                local distanceToPile = math.sqrt((event.x - pilePosition.x) ^ 2 + (event.y - pilePosition.y-0) ^ 2)
+                local layDistance = 100
+                local cardLed = _G.game.rounds[_G.game.thisRound].turns[1].card
                 
                 if event.phase == "moved" then
-                    if distanceToPile < layDistance then
+                    if distanceToPile < layDistance and not obj.willRenig(thisCard.value, cardLed) then
                         if not thisCard.isLaying and obj.canDragCards then
                             thisCard.isLaying = true
                             transition.to(thisCard, {
-                                xScale = 1.2,
-                                yScale = 1.2,
+                                xScale = 1.4,
+                                yScale = 1.4,
                                 time = _G.animationTime
                             })
                         end
@@ -575,18 +615,7 @@ rtn.new = function(ID, team)
                 if _G.game.rounds[_G.game.thisRound].turns[1] then
                     local cardLed = _G.game.rounds[_G.game.thisRound].turns[1].card
                     -- do we have the same color
-                    local haveTheColor = false
-                    for c = 1, #obj.cards do
-                        if _G.cardMatches(obj.cards[c], cardLed) then
-                            haveTheColor = true
-                            break
-                        end
-                    end
-                    if _G.cardMatches(_card.value, cardLed) then
-                        -- playing the color that was led
-                        executeLay()
-                    elseif not haveTheColor then
-                        -- don't have the color the was led
+                    if not obj.willRenig(_card.value, cardLed) then
                         executeLay()
                     end
                 else
