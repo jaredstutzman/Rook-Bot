@@ -105,7 +105,14 @@ rtn.new = function(ID, team)
         end
         return false
     end
-    obj.willRenig = function(layingCard, colorLed)
+    obj.willRenig = function(layingCard)
+        local colorLed = nil
+        local thisRound = _G.game.rounds[_G.game.thisRound]
+        if thisRound.turns[1] then
+            colorLed = thisRound.turns[1].card
+        else
+            return false
+        end
         -- check if the player has the color that was led
         -- if the player has the color that was led and is not playing it then they are reneging
         if obj._hasThisColor(colorLed) and not _G.cardMatches(layingCard, colorLed) then
@@ -368,10 +375,9 @@ rtn.new = function(ID, team)
                 local pilePosition = _G.centerPilePosition
                 local distanceToPile = math.sqrt((event.x - pilePosition.x) ^ 2 + (event.y - pilePosition.y-0) ^ 2)
                 local layDistance = 100
-                local cardLed = _G.game.rounds[_G.game.thisRound].turns[1].card
                 
                 if event.phase == "moved" then
-                    if distanceToPile < layDistance and not obj.willRenig(thisCard.value, cardLed) then
+                    if distanceToPile < layDistance and not obj.willRenig(thisCard.value) then
                         if not thisCard.isLaying and obj.canDragCards then
                             thisCard.isLaying = true
                             transition.to(thisCard, {
@@ -613,9 +619,8 @@ rtn.new = function(ID, team)
                 -- or we don't have that color
                 -- first check if we are laying first
                 if _G.game.rounds[_G.game.thisRound].turns[1] then
-                    local cardLed = _G.game.rounds[_G.game.thisRound].turns[1].card
                     -- do we have the same color
-                    if not obj.willRenig(_card.value, cardLed) then
+                    if not obj.willRenig(_card.value) then
                         executeLay()
                     end
                 else
