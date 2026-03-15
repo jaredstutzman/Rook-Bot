@@ -282,7 +282,7 @@ rtn.new = function(ID, team)
                     obj._consecutiveCardEvents = 1
                     obj._lastCardEvent = thisCard
                 end
-                if obj._consecutiveCardEvents == 3 then
+                if obj._consecutiveCardEvents == 3 or event.phase == "began" then
                     -- Raise the card if 3 consecutive events
                     if obj.myHand.cardInFocus ~= thisCard then
                         obj.myHand.cardInFocus = thisCard
