@@ -287,6 +287,12 @@ rtn.new = function(ID, team)
                     if obj.myHand.cardInFocus ~= thisCard then
                         obj.myHand.cardInFocus = thisCard
                         thisCard:raise(true)
+                            -- Haptic feedback for HTML builds
+                            if system.getInfo and system.getInfo("environment") == "browser" then
+                                if native and native.executeJavaScript then
+                                    native.executeJavaScript("if (navigator.vibrate) navigator.vibrate(10);")
+                                end
+                            end
                     end
                 end
                 if event.phase == "began" or event.phase == "moved" then

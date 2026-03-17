@@ -1131,7 +1131,7 @@ local step = function()
         end
         setup = true
         -- check if a team won
-        if teams[otherTeam].points > 1000 and teams[otherTeam].points > teams[team].points then
+        if teams[otherTeam].points >= 1000 and teams[otherTeam].points > teams[team].points then
             setup = false
             gameIsWon = true
             print("team " .. otherTeam .. " won")
@@ -1140,7 +1140,7 @@ local step = function()
             print("with " .. teams[team].points .. " points")
         end
         -- check if a team won
-        if teams[team].points > 1000 and teams[team].points > teams[otherTeam].points then
+        if teams[team].points >= 1000 and teams[team].points > teams[otherTeam].points then
             setup = false
             gameIsWon = true
             print("team " .. team .. " won")
@@ -1199,8 +1199,5 @@ end
 Runtime:addEventListener("enterFrame", update)
 
 
--- TODO: rewrite and clean up
-    -- UI with a mainPhase variable that can be "setup", "biding", "laying card", "choosing card"
-    -- this is just so controls change; You can not drag a card out when it is in the "biding" phase
-
 -- TODO: work on improvments "lessOptimalLay"
+-- add haptic feedback.
